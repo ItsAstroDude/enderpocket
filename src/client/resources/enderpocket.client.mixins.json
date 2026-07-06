@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "dev.astro.enderpocket.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AbstractContainerScreenMixin",
+		"AbstractRecipeBookScreenAccessor",
+		"CreativeModeInventoryScreenMixin",
+		"InventoryScreenMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

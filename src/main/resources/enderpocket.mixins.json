@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "dev.astro.enderpocket.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"EnderChestBlockMixin",
+		"InventoryMenuMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
