@@ -48,10 +48,17 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	@Unique
 	private void enderpocket$positionButton() {
 		if (this.enderpocket$button != null) {
+			// Top-right corner of the GUI, above where the potion-effect stack
+			// starts (EffectsInInventoryMixin shifts the stack below this).
 			this.enderpocket$button.setPosition(
 					this.leftPos + EnderPocketLayout.INV_W + EnderPocketLayout.GAP,
-					this.topPos + EnderPocketLayout.PANEL_REL_Y - EnderTabButton.SIZE - 2);
+					this.topPos);
 		}
+	}
+
+	@Unique
+	private boolean enderpocket$effectsActive() {
+		return this.minecraft.player != null && !this.minecraft.player.getActiveEffects().isEmpty();
 	}
 
 	@Inject(method = "init", at = @At("TAIL"))
@@ -81,7 +88,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 					target = "Lnet/minecraft/client/gui/screens/inventory/AbstractRecipeBookScreen;extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
 					shift = At.Shift.AFTER))
 	private void enderpocket$afterDim(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
-		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.enderpocket$recipeSideBySide());
+		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.enderpocket$recipeSideBySide(), this.enderpocket$effectsActive());
 		EnderPanelClient.pushScreen(graphics.pose());
 	}
 
@@ -178,7 +185,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	protected boolean hasClickedOutside(double mx, double my, int xo, int yo) {
 		if (EnderPanelClient.isOpen()) {
 			float sp = EnderPanelClient.panelScale();
-			double px = xo + EnderPocketLayout.PANEL_REL_X;
+			double px = xo + EnderPocketLayout.PANEL_REL_X + EnderPanelClient.panelTx();
 			double py = yo + EnderPanelClient.ANCHOR_Y - sp * EnderPocketLayout.PANEL_H / 2.0;
 			if (mx >= px && mx < px + sp * EnderPocketLayout.PANEL_W && my >= py && my < py + sp * EnderPocketLayout.PANEL_H) {
 				return false;

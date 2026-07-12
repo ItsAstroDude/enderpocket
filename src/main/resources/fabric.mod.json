@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "enderpocket",
 	"version": "${version}",
-	"name": "EnderPocket",
+	"name": "Explorer's Ender Chest",
 	"description": "Open your real ender chest straight from the inventory screen. No chest, no commands — just a button.",
 	"authors": [
 		"ItsAstroDude"
