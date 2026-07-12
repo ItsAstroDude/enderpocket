@@ -1,7 +1,7 @@
-# EnderPocket
+# Explorer's Ender Chest
 
 Open your **real ender chest** straight from the inventory screen. No chest nearby, no commands,
-no new items — just a button.
+no new items — just a button. (Internally codenamed *EnderPocket*.)
 
 ![Fabric](https://img.shields.io/badge/loader-Fabric-blue) ![Minecraft 26.2](https://img.shields.io/badge/minecraft-26.2-green)
 

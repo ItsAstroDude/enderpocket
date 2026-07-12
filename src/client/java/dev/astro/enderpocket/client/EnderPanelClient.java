@@ -28,13 +28,18 @@ public final class EnderPanelClient {
 	public static final float ANCHOR_X = EnderPocketLayout.PANEL_REL_X;
 	public static final float ANCHOR_Y = EnderPocketLayout.PANEL_REL_Y + EnderPocketLayout.PANEL_H / 2.0f;
 
+	/** Horizontal room reserved for the compact potion-effect strip (32px + gap). */
+	public static final int EFFECTS_STRIP_OFFSET = 34;
+
 	private static boolean open;
 	// Screen (ensemble) transform: scale + offset, pivot = screen centre.
 	private static float scrScale = 1.0f;
 	private static float scrTx;
 	private static float scrTy;
-	// Panel-only transform: scale about the anchor point.
+	// Panel-only transform: translate right (to clear the effect strip), then
+	// scale about the anchor point.
 	private static float panScale = 1.0f;
+	private static float panTx;
 	private static long lastMs = -1L;
 
 	/** Untransformed mouse position, kept for tooltip anchoring and the entity renderer. */
@@ -54,6 +59,7 @@ public final class EnderPanelClient {
 		scrTx = 0.0f;
 		scrTy = 0.0f;
 		panScale = 1.0f;
+		panTx = 0.0f;
 		lastMs = -1L;
 	}
 
@@ -94,12 +100,17 @@ public final class EnderPanelClient {
 	 * {@code recipeSideBySide} must be false when the recipe book is closed OR
 	 * overlaying the GUI in width-too-narrow mode.
 	 */
-	public static void updateAnim(int width, int height, int leftPos, boolean recipeSideBySide) {
+	public static void updateAnim(int width, int height, int leftPos, boolean recipeSideBySide, boolean effectsActive) {
 		float tScrScale = 1.0f;
 		float tScrTx = 0.0f;
 		float tScrTy = 0.0f;
 		float tPanScale = 1.0f;
+		float tPanTx = 0.0f;
 		if (open) {
+			// With active potion effects the panel steps right so the compact
+			// effect strip keeps its spot next to the GUI.
+			int panelRelX = EnderPocketLayout.PANEL_REL_X + (effectsActive ? EFFECTS_STRIP_OFFSET : 0);
+			tPanTx = effectsActive ? EFFECTS_STRIP_OFFSET : 0.0f;
 			if (recipeSideBySide) {
 				// Ensemble shrink around the screen centre; panel stays full-size
 				// within the ensemble.
@@ -107,7 +118,7 @@ public final class EnderPanelClient {
 				float cy = height / 2.0f;
 				// Recipe book component is 147 wide plus a small gap when open.
 				int leftEdge = leftPos - 155 - 4;
-				int rightEdge = leftPos + EnderPocketLayout.PANEL_REL_X + EnderPocketLayout.PANEL_W + 4;
+				int rightEdge = leftPos + panelRelX + EnderPocketLayout.PANEL_W + 4;
 				float sRight = rightEdge > width - 2 ? (width - 2 - cx) / (rightEdge - cx) : 1.0f;
 				float sLeft = leftEdge < 2 ? (cx - 2) / (cx - leftEdge) : 1.0f;
 				float s = Math.clamp(Math.min(sRight, sLeft), 0.4f, 1.0f);
@@ -116,7 +127,7 @@ public final class EnderPanelClient {
 				tScrTy = cy * (1.0f - s);
 			} else {
 				// Inventory untouched; shrink only the panel into the free space.
-				float available = width - 2 - (leftPos + EnderPocketLayout.PANEL_REL_X);
+				float available = width - 2 - (leftPos + panelRelX);
 				tPanScale = Math.clamp(available / EnderPocketLayout.PANEL_W, 0.5f, 1.0f);
 			}
 		}
@@ -129,6 +140,7 @@ public final class EnderPanelClient {
 		scrTx = ease(scrTx, tScrTx, k, 0.35f);
 		scrTy = ease(scrTy, tScrTy, k, 0.35f);
 		panScale = ease(panScale, tPanScale, k, 0.002f);
+		panTx = ease(panTx, tPanTx, k, 0.35f);
 	}
 
 	private static float ease(float cur, float target, float k, float snap) {
@@ -196,21 +208,26 @@ public final class EnderPanelClient {
 	// ---------------------------------------------------------------- panel tf
 
 	public static boolean panelTransformActive() {
-		return panScale < 0.9995f;
+		return panScale < 0.9995f || Math.abs(panTx) > 0.01f;
 	}
 
 	public static float panelScale() {
 		return panScale;
 	}
 
+	public static float panelTx() {
+		return panTx;
+	}
+
 	/**
-	 * Push the panel-only scale in a pose that is already translated to the GUI
-	 * origin (the slot-drawing pose). No-op when the panel is at full size.
+	 * Push the panel-only transform (rightward step past the effect strip, then
+	 * scale about the anchor) in a pose that is already translated to the GUI
+	 * origin (the slot-drawing pose). No-op when the panel is at rest.
 	 */
 	public static void pushPanelRel(Matrix3x2fStack pose) {
 		if (panelTransformActive()) {
 			pose.pushMatrix();
-			pose.translate(ANCHOR_X, ANCHOR_Y);
+			pose.translate(ANCHOR_X + panTx, ANCHOR_Y);
 			pose.scale(panScale, panScale);
 			pose.translate(-ANCHOR_X, -ANCHOR_Y);
 		}
@@ -228,7 +245,7 @@ public final class EnderPanelClient {
 			float ax = leftPos + ANCHOR_X;
 			float ay = topPos + ANCHOR_Y;
 			pose.pushMatrix();
-			pose.translate(ax, ay);
+			pose.translate(ax + panTx, ay);
 			pose.scale(panScale, panScale);
 			pose.translate(-ax, -ay);
 		}
@@ -240,7 +257,7 @@ public final class EnderPanelClient {
 
 	/** Inverse panel mapping for GUI-relative coordinates. */
 	public static double invPanelRelX(double xRel) {
-		return ANCHOR_X + (xRel - ANCHOR_X) / panScale;
+		return ANCHOR_X + (xRel - panTx - ANCHOR_X) / panScale;
 	}
 
 	public static double invPanelRelY(double yRel) {
