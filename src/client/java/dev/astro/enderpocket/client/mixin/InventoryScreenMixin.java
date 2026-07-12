@@ -40,12 +40,6 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	}
 
 	@Unique
-	private boolean enderpocket$recipeSideBySide() {
-		AbstractRecipeBookScreenAccessor accessor = (AbstractRecipeBookScreenAccessor) this;
-		return accessor.enderpocket$recipeBook().isVisible() && !accessor.enderpocket$widthTooNarrow();
-	}
-
-	@Unique
 	private void enderpocket$positionButton() {
 		if (this.enderpocket$button != null) {
 			// Top-right corner of the GUI, above where the potion-effect stack
@@ -57,14 +51,32 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	}
 
 	@Unique
-	private boolean enderpocket$effectsActive() {
-		return this.minecraft.player != null && !this.minecraft.player.getActiveEffects().isEmpty();
+	private int enderpocket$effectsCount() {
+		return this.minecraft.player == null ? 0 : this.minecraft.player.getActiveEffects().size();
+	}
+
+	@Unique
+	private void enderpocket$onPanelToggled() {
+		if (!EnderPanelClient.isOpen() || EnderPanelClient.isBookRespected()) {
+			return;
+		}
+		// Auto-close the recipe book to make room for the full-size panel —
+		// once. If the user re-opens it, we respect that and shrink instead.
+		var recipeBook = ((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook();
+		if (recipeBook.isVisible()) {
+			recipeBook.toggleVisibility();
+			this.leftPos = recipeBook.updateScreenPosition(this.width, this.imageWidth);
+			this.rebuildWidgets();
+		}
 	}
 
 	@Inject(method = "init", at = @At("TAIL"))
 	private void enderpocket$init(CallbackInfo ci) {
 		if (EnderPanelClient.available(this.minecraft.player)) {
-			this.enderpocket$button = this.addRenderableWidget(new EnderTabButton(0, 0, EnderPanelClient::toggle));
+			this.enderpocket$button = this.addRenderableWidget(new EnderTabButton(0, 0, () -> {
+				EnderPanelClient.toggle();
+				this.enderpocket$onPanelToggled();
+			}));
 			this.enderpocket$positionButton();
 		} else if (EnderPanelClient.isOpen()) {
 			EnderPanelClient.setOpen(false);
@@ -74,6 +86,11 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	@Inject(method = "onRecipeBookButtonClick", at = @At("TAIL"))
 	private void enderpocket$onRecipeBookToggled(CallbackInfo ci) {
 		this.enderpocket$positionButton();
+		// The user re-opened the recipe book while the panel is open — stop
+		// auto-closing it and let the ensemble shrink handle the width.
+		if (EnderPanelClient.isOpen() && ((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible()) {
+			EnderPanelClient.respectBook();
+		}
 	}
 
 	// ------------------------------------------------------------- rendering
@@ -88,7 +105,8 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 					target = "Lnet/minecraft/client/gui/screens/inventory/AbstractRecipeBookScreen;extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
 					shift = At.Shift.AFTER))
 	private void enderpocket$afterDim(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
-		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.enderpocket$recipeSideBySide(), this.enderpocket$effectsActive());
+		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.topPos,
+				((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible(), this.enderpocket$effectsCount());
 		EnderPanelClient.pushScreen(graphics.pose());
 	}
 
@@ -185,8 +203,8 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	protected boolean hasClickedOutside(double mx, double my, int xo, int yo) {
 		if (EnderPanelClient.isOpen()) {
 			float sp = EnderPanelClient.panelScale();
-			double px = xo + EnderPocketLayout.PANEL_REL_X + EnderPanelClient.panelTx();
-			double py = yo + EnderPanelClient.ANCHOR_Y - sp * EnderPocketLayout.PANEL_H / 2.0;
+			double px = xo + EnderPocketLayout.PANEL_REL_X;
+			double py = yo + EnderPanelClient.ANCHOR_Y + EnderPanelClient.panelTy() - sp * EnderPocketLayout.PANEL_H / 2.0;
 			if (mx >= px && mx < px + sp * EnderPocketLayout.PANEL_W && my >= py && my < py + sp * EnderPocketLayout.PANEL_H) {
 				return false;
 			}
@@ -203,6 +221,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 				&& EnderPocketClient.toggleKey.matches(event)
 				&& EnderPanelClient.available(this.minecraft.player)) {
 			EnderPanelClient.toggle();
+			this.enderpocket$onPanelToggled();
 			return true;
 		}
 		return super.keyPressed(event);
