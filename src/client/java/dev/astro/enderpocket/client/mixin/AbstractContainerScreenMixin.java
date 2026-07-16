@@ -33,7 +33,12 @@ public abstract class AbstractContainerScreenMixin {
 
 	@WrapMethod(method = "extractSlot")
 	private void enderpocket$scaleSlotRender(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, Operation<Void> original) {
-		if (this.enderpocket$panelSlot(slot)) {
+		if ((Object) this instanceof InventoryScreen && slot instanceof EnderSlot) {
+			// Slot contents stay hidden until the panel has slid out; they'd
+			// otherwise float over the inventory during the animation.
+			if (!EnderPanelClient.slotsInteractive()) {
+				return;
+			}
 			EnderPanelClient.pushPanelRel(graphics.pose());
 			original.call(graphics, slot, mouseX, mouseY);
 			EnderPanelClient.popPanelRel(graphics.pose());
@@ -66,10 +71,15 @@ public abstract class AbstractContainerScreenMixin {
 
 	@WrapMethod(method = "isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z")
 	private boolean enderpocket$panelSlotHover(Slot slot, double mx, double my, Operation<Boolean> original) {
-		if (this.enderpocket$panelSlot(slot)) {
-			double relX = EnderPanelClient.invPanelRelX(mx - this.leftPos);
-			double relY = EnderPanelClient.invPanelRelY(my - this.topPos);
-			return relX >= slot.x - 1 && relX < slot.x + 17 && relY >= slot.y - 1 && relY < slot.y + 17;
+		if ((Object) this instanceof InventoryScreen && slot instanceof EnderSlot) {
+			if (!EnderPanelClient.slotsInteractive()) {
+				return false;
+			}
+			if (EnderPanelClient.panelTransformActive()) {
+				double relX = EnderPanelClient.invPanelRelX(mx - this.leftPos);
+				double relY = EnderPanelClient.invPanelRelY(my - this.topPos);
+				return relX >= slot.x - 1 && relX < slot.x + 17 && relY >= slot.y - 1 && relY < slot.y + 17;
+			}
 		}
 		return original.call(slot, mx, my);
 	}

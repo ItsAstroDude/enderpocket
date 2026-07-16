@@ -1,4 +1,15 @@
 {
-	"key.enderpocket.toggle": "Toggle Ender Pocket",
-	"enderpocket.button": "Ender Pocket"
+	"key.enderpocket.toggle": "Toggle Ender Chest Panel",
+	"enderpocket.button": "Ender Chest",
+	"enderpocket.config.title": "Explorer's Ender Chest",
+	"enderpocket.config.category": "General",
+	"enderpocket.config.requireUnlock": "Require unlock",
+	"enderpocket.config.requireUnlock.tooltip": "Only show the button after you've opened a physical ender chest in this world. On dedicated servers the server's own setting is what counts.",
+	"enderpocket.config.rememberOpen": "Remember open state",
+	"enderpocket.config.rememberOpen.tooltip": "Keep the panel open across inventory opens (per game session).",
+	"enderpocket.config.autoCloseRecipeBook": "Auto-close recipe book",
+	"enderpocket.config.autoCloseRecipeBook.tooltip": "Close the recipe book when the panel opens. Re-opening the book is respected — everything scales to fit instead.",
+	"enderpocket.config.sounds": "Sounds",
+	"enderpocket.config.animationSpeed": "Animation speed",
+	"enderpocket.config.animationSpeed.tooltip": "Higher = snappier animations. 1.0 is the default feel."
 }

@@ -19,6 +19,9 @@
 		],
 		"client": [
 			"dev.astro.enderpocket.client.EnderPocketClient"
+		],
+		"modmenu": [
+			"dev.astro.enderpocket.client.EnderPocketModMenu"
 		]
 	},
 	"mixins": [
@@ -33,5 +36,9 @@
 		"minecraft": "~26.2",
 		"java": ">=25",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*",
+		"cloth-config": "*"
 	}
 }

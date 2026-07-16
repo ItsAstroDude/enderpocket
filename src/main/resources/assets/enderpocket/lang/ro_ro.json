@@ -1,4 +1,15 @@
 {
-	"key.enderpocket.toggle": "Comută Ender Pocket",
-	"enderpocket.button": "Ender Pocket"
+	"key.enderpocket.toggle": "Comută panoul Ender Chest",
+	"enderpocket.button": "Cufăr Ender",
+	"enderpocket.config.title": "Explorer's Ender Chest",
+	"enderpocket.config.category": "General",
+	"enderpocket.config.requireUnlock": "Necesită deblocare",
+	"enderpocket.config.requireUnlock.tooltip": "Butonul apare doar după ce ai deschis un cufăr ender fizic în lumea respectivă. Pe servere dedicate contează setarea serverului.",
+	"enderpocket.config.rememberOpen": "Ține minte starea deschisă",
+	"enderpocket.config.rememberOpen.tooltip": "Panoul rămâne deschis între deschiderile inventarului (per sesiune de joc).",
+	"enderpocket.config.autoCloseRecipeBook": "Închide automat cartea de rețete",
+	"enderpocket.config.autoCloseRecipeBook.tooltip": "Închide cartea de rețete când se deschide panoul. Dacă o redeschizi, rămâne deschisă — totul se scalează ca să încapă.",
+	"enderpocket.config.sounds": "Sunete",
+	"enderpocket.config.animationSpeed": "Viteza animațiilor",
+	"enderpocket.config.animationSpeed.tooltip": "Mai mare = animații mai rapide. 1.0 este valoarea implicită."
 }

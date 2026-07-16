@@ -17,12 +17,14 @@ public class EnderPocket implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		EnderPocketConfig.load();
 		EnderPocketAttachments.init();
 		PayloadTypeRegistry.serverboundPlay().register(PanelOpenPayload.TYPE, PanelOpenPayload.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(PanelOpenPayload.TYPE, (payload, context) -> {
 			var player = context.player();
-			boolean unlocked = player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false);
-			player.setAttached(EnderPocketAttachments.PANEL_OPEN, payload.open() && unlocked);
+			boolean allowed = !EnderPocketConfig.get().requireUnlock
+					|| player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false);
+			player.setAttached(EnderPocketAttachments.PANEL_OPEN, payload.open() && allowed);
 		});
 	}
 }
