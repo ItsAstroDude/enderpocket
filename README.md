@@ -26,6 +26,32 @@ Fully multiplayer-safe — all item movement goes through the vanilla server-sid
 (no client-side cheating, no dupes). The server needs the mod too; on servers without it, the
 button simply hides itself.
 
+## Resource pack integration
+
+The mod follows your pack's GUI theme automatically — the panel window is assembled at
+runtime from your pack's own `generic_54.png` chest texture. For packs that restyle the
+inventory layout more aggressively, everything else is overridable too:
+
+- **Button icon**: `assets/enderpocket/textures/gui/sprites/button/ender_pocket.png` (16×16)
+- **Dedicated panel window**: `assets/enderpocket/textures/gui/ender_panel.png` (176×78) —
+  if present, it's used instead of the generic_54 composite. Slots sit at x=8+col·18, y=18+row·18.
+- **Positions**: `assets/enderpocket/gui_layout.json` — all coordinates relative to the
+  inventory GUI's top-left corner:
+
+```json
+{
+	"button_row_spots": [[128, 61], [152, 61]],
+	"button_corner": [184, 0],
+	"panel_offset": [0, 0],
+	"effects_clearance": 26
+}
+```
+
+`button_row_spots` are tried in order and used when nothing else (e.g. another mod's buttons)
+occupies them; `button_corner` is the fallback spot outside the GUI. `panel_offset` shifts the
+open panel (and its slot hitboxes) by x/y pixels. `effects_clearance` is how far the potion
+effect list gets pushed down when the button uses the corner spot.
+
 ## Requirements
 
 - Minecraft **26.2**

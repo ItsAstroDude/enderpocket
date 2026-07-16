@@ -34,8 +34,6 @@ public final class EnderPanelClient {
 	public static final float ANCHOR_X = EnderPocketLayout.PANEL_REL_X;
 	public static final float ANCHOR_Y = EnderPocketLayout.PANEL_REL_Y + EnderPocketLayout.PANEL_H / 2.0f;
 
-	/** Vertical clearance for the button when it sits outside the GUI; per-effect step. */
-	public static final int BUTTON_CLEARANCE = 26;
 	public static final int EFFECT_STEP = 33;
 
 	/**
@@ -52,7 +50,16 @@ public final class EnderPanelClient {
 
 	/** Where the potion-effect stack starts, relative to the GUI top. */
 	public static int effectsTop() {
-		return buttonInRow ? 0 : BUTTON_CLEARANCE;
+		return buttonInRow ? 0 : EnderPocketGuiLayout.get().effectsClearance;
+	}
+
+	/** Resource-pack panel offset (EnderPocketGuiLayout). */
+	private static float layoutDx() {
+		return EnderPocketGuiLayout.get().panelOffset[0];
+	}
+
+	private static float layoutDy() {
+		return EnderPocketGuiLayout.get().panelOffset[1];
 	}
 
 	private static boolean open;
@@ -161,8 +168,8 @@ public final class EnderPanelClient {
 				tPanTy = Math.max(0, effectsTop() + effectsHeight + 4 - EnderPocketLayout.PANEL_REL_Y);
 			}
 
-			int rightOverflow = leftPos + EnderPocketLayout.PANEL_REL_X + EnderPocketLayout.PANEL_W + 4 - width;
-			float panelBottom = topPos + EnderPocketLayout.PANEL_REL_Y + tPanTy + EnderPocketLayout.PANEL_H;
+			int rightOverflow = leftPos + EnderPocketLayout.PANEL_REL_X + (int) layoutDx() + EnderPocketLayout.PANEL_W + 4 - width;
+			float panelBottom = topPos + EnderPocketLayout.PANEL_REL_Y + layoutDy() + tPanTy + EnderPocketLayout.PANEL_H;
 			boolean verticalOk = panelBottom <= height - 2;
 			if (!bookVisible && rightOverflow <= 0 && verticalOk) {
 				// Fits detached at full size — nothing moves.
@@ -280,7 +287,8 @@ public final class EnderPanelClient {
 	// ---------------------------------------------------------------- panel tf
 
 	public static boolean panelTransformActive() {
-		return panScale < 0.9995f || Math.abs(panTy) > 0.01f || panProgress < 0.9995f;
+		return panScale < 0.9995f || Math.abs(panTy) > 0.01f || panProgress < 0.9995f
+				|| Math.abs(layoutDx()) > 0.01f || Math.abs(layoutDy()) > 0.01f;
 	}
 
 	public static float panelScale() {
@@ -299,7 +307,7 @@ public final class EnderPanelClient {
 	public static void pushPanelRel(Matrix3x2fStack pose) {
 		if (panelTransformActive()) {
 			pose.pushMatrix();
-			pose.translate(ANCHOR_X + slideX(), ANCHOR_Y + panTy);
+			pose.translate(ANCHOR_X + slideX() + layoutDx(), ANCHOR_Y + panTy + layoutDy());
 			pose.scale(panScale, panScale);
 			pose.translate(-ANCHOR_X, -ANCHOR_Y);
 		}
@@ -317,7 +325,7 @@ public final class EnderPanelClient {
 			float ax = leftPos + ANCHOR_X;
 			float ay = topPos + ANCHOR_Y;
 			pose.pushMatrix();
-			pose.translate(ax + slideX(), ay + panTy);
+			pose.translate(ax + slideX() + layoutDx(), ay + panTy + layoutDy());
 			pose.scale(panScale, panScale);
 			pose.translate(-ax, -ay);
 		}
@@ -329,10 +337,10 @@ public final class EnderPanelClient {
 
 	/** Inverse panel mapping for GUI-relative coordinates. */
 	public static double invPanelRelX(double xRel) {
-		return ANCHOR_X + (xRel - slideX() - ANCHOR_X) / panScale;
+		return ANCHOR_X + (xRel - slideX() - layoutDx() - ANCHOR_X) / panScale;
 	}
 
 	public static double invPanelRelY(double yRel) {
-		return ANCHOR_Y + (yRel - panTy - ANCHOR_Y) / panScale;
+		return ANCHOR_Y + (yRel - panTy - layoutDy() - ANCHOR_Y) / panScale;
 	}
 }

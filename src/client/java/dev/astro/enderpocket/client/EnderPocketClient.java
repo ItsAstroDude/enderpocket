@@ -1,13 +1,19 @@
 package dev.astro.enderpocket.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.astro.enderpocket.EnderPocket;
 import dev.astro.enderpocket.EnderPocketConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.inventory.RecipeBookType;
 
 public class EnderPocketClient implements ClientModInitializer {
@@ -21,6 +27,20 @@ public class EnderPocketClient implements ClientModInitializer {
 				KeyMapping.Category.INVENTORY));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EnderPanelClient.reset());
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> EnderPanelClient.reset());
+
+		// Resource packs can reposition the button/panel and re-skin the panel —
+		// see EnderPocketGuiLayout.
+		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+			@Override
+			public Identifier getFabricId() {
+				return EnderPocket.id("gui_layout");
+			}
+
+			@Override
+			public void onResourceManagerReload(ResourceManager resourceManager) {
+				EnderPocketGuiLayout.reload(resourceManager);
+			}
+		});
 
 		// Open-from-anywhere: pressing the keybind in-world opens the inventory
 		// with the panel already out.
