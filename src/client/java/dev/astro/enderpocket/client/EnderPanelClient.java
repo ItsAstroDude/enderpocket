@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import org.joml.Matrix3x2fStack;
@@ -333,6 +334,25 @@ public final class EnderPanelClient {
 
 	public static void popPanelAbs(Matrix3x2fStack pose) {
 		popPanelRel(pose);
+	}
+
+	/**
+	 * Clip panel drawing to the region right of the inventory's right edge, so
+	 * the sliding panel emerges cleanly from behind the inventory regardless of
+	 * the resource pack (some packs' inventory textures don't opaquely cover the
+	 * tucked panel). Enable while ONLY the screen transform is on the pose — the
+	 * scissor rectangle is captured through it into screen space.
+	 */
+	public static void pushInventoryClip(GuiGraphicsExtractor graphics, int leftPos, int topPos) {
+		int x0 = leftPos + EnderPocketLayout.INV_W;
+		int y0 = topPos + EnderPocketLayout.PANEL_REL_Y - 4;
+		int x1 = leftPos + EnderPocketLayout.PANEL_REL_X + EnderPocketLayout.PANEL_W + 40;
+		int y1 = topPos + EnderPocketLayout.PANEL_REL_Y + Math.round(panTy) + EnderPocketLayout.PANEL_H + 4;
+		graphics.enableScissor(x0, y0, x1, y1);
+	}
+
+	public static void popInventoryClip(GuiGraphicsExtractor graphics) {
+		graphics.disableScissor();
 	}
 
 	/** Inverse panel mapping for GUI-relative coordinates. */

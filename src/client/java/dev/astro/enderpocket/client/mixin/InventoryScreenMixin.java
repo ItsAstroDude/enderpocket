@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
+import dev.astro.enderpocket.EnderSlot;
 import dev.astro.enderpocket.client.EnderPanelClient;
 import dev.astro.enderpocket.client.EnderPocketClient;
 import dev.astro.enderpocket.client.EnderPocketGuiLayout;
@@ -22,6 +23,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -155,11 +158,13 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.topPos,
 				((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible(), this.enderpocket$effectsCount());
 		EnderPanelClient.pushScreen(graphics.pose());
-		// Panel window drawn here — BEFORE the vanilla GUI texture — so it slides
-		// out from behind the inventory. Assembled from the vanilla chest texture
-		// so resource packs (e.g. dark GUI themes) restyle it automatically:
-		// title bar + 3 slot rows, then the bottom border strip.
+		// Panel drawn here — BEFORE the vanilla GUI texture — so it slides out
+		// from behind the inventory, clipped to the inventory's right edge so the
+		// tucked part never shows (pack-independent; some packs don't opaquely
+		// cover it). Items are drawn here while sliding; once the panel settles,
+		// the normal slot pass takes over (carrying hover highlights + tooltips).
 		if (EnderPanelClient.visualOpen()) {
+			EnderPanelClient.pushInventoryClip(graphics, this.leftPos, this.topPos);
 			EnderPanelClient.pushPanelAbs(graphics.pose(), this.leftPos, this.topPos);
 			int px = this.leftPos + EnderPocketLayout.PANEL_REL_X;
 			int py = this.topPos + EnderPocketLayout.PANEL_REL_Y;
@@ -169,12 +174,29 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H,
 						EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H);
 			} else {
+				// Assembled from the pack's own chest texture so it auto-themes:
+				// title bar + 3 slot rows, then the bottom border strip.
 				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
 						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, 71, 256, 256);
 				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
 						px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
 			}
+			graphics.text(this.font, ENDERPOCKET_PANEL_TITLE, px + 8, py + 6, -12566464, false);
+			if (!EnderPanelClient.slotsInteractive()) {
+				for (Slot slot : this.getMenu().slots) {
+					if (slot instanceof EnderSlot) {
+						ItemStack stack = slot.getItem();
+						if (!stack.isEmpty()) {
+							int ix = this.leftPos + slot.x;
+							int iy = this.topPos + slot.y;
+							graphics.item(stack, ix, iy);
+							graphics.itemDecorations(this.font, stack, ix, iy);
+						}
+					}
+				}
+			}
 			EnderPanelClient.popPanelAbs(graphics.pose());
+			EnderPanelClient.popInventoryClip(graphics);
 		}
 	}
 
@@ -212,16 +234,6 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 			original.call(graphics, mouseX, mouseY, a);
 		}
 		EnderPanelClient.popScreen(graphics.pose());
-	}
-
-	@Inject(method = "extractLabels", at = @At("TAIL"))
-	private void enderpocket$panelLabel(GuiGraphicsExtractor graphics, int mouseX, int mouseY, CallbackInfo ci) {
-		if (EnderPanelClient.slotsInteractive()) {
-			EnderPanelClient.pushPanelRel(graphics.pose());
-			graphics.text(this.font, ENDERPOCKET_PANEL_TITLE,
-					EnderPocketLayout.PANEL_REL_X + 8, EnderPocketLayout.PANEL_REL_Y + 6, -12566464, false);
-			EnderPanelClient.popPanelRel(graphics.pose());
-		}
 	}
 
 	@Override

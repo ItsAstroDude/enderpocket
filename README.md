@@ -28,11 +28,11 @@ button simply hides itself.
 
 ## Resource pack integration
 
-The mod follows your pack's GUI theme automatically — the panel window is assembled at
-runtime from your pack's own `generic_54.png` chest texture. For packs that restyle the
-inventory layout more aggressively, everything else is overridable too:
+The mod follows your pack's GUI theme automatically — the button is the vanilla ender chest
+item (so it matches your item textures), and the panel window is assembled at runtime from
+your pack's own `generic_54.png` chest texture. For packs that restyle the inventory layout
+more aggressively, the rest is overridable too:
 
-- **Button icon**: `assets/enderpocket/textures/gui/sprites/button/ender_pocket.png` (16×16)
 - **Dedicated panel window**: `assets/enderpocket/textures/gui/ender_panel.png` (176×78) —
   if present, it's used instead of the generic_54 composite. Slots sit at x=8+col·18, y=18+row·18.
 - **Positions**: `assets/enderpocket/gui_layout.json` — all coordinates relative to the
