@@ -9,6 +9,7 @@ import dev.astro.enderpocket.client.EnderPanelClient;
 import dev.astro.enderpocket.client.EnderPocketClient;
 import dev.astro.enderpocket.client.EnderTabButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
@@ -42,13 +43,43 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Unique
 	private void enderpocket$positionButton() {
-		if (this.enderpocket$button != null) {
-			// Top-right corner of the GUI, above where the potion-effect stack
-			// starts (EffectsInInventoryMixin shifts the stack below this).
-			this.enderpocket$button.setPosition(
-					this.leftPos + EnderPocketLayout.INV_W + EnderPocketLayout.GAP,
-					this.topPos);
+		if (this.enderpocket$button == null) {
+			return;
 		}
+		// Preferred: a free 20x18 spot in the vanilla button row next to the
+		// recipe book toggle (x 128/152 rel; occupied by e.g. Terrastorage when
+		// present). Scanned live so it adapts to whatever other mods add.
+		int rowY = this.height / 2 - 22;
+		for (int relX : new int[]{128, 152}) {
+			int bx = this.leftPos + relX;
+			if (this.enderpocket$rowSpotFree(bx, rowY, EnderTabButton.ROW_W, EnderTabButton.ROW_H)) {
+				this.enderpocket$button.setPosition(bx, rowY);
+				this.enderpocket$button.setWidth(EnderTabButton.ROW_W);
+				this.enderpocket$button.setHeight(EnderTabButton.ROW_H);
+				EnderPanelClient.setButtonInRow(true);
+				return;
+			}
+		}
+		// Fallback: top-right corner outside the GUI, above where the
+		// potion-effect stack starts (EffectsInInventoryMixin shifts it down).
+		this.enderpocket$button.setPosition(
+				this.leftPos + EnderPocketLayout.INV_W + EnderPocketLayout.GAP,
+				this.topPos);
+		this.enderpocket$button.setWidth(EnderTabButton.CORNER_SIZE);
+		this.enderpocket$button.setHeight(EnderTabButton.CORNER_SIZE);
+		EnderPanelClient.setButtonInRow(false);
+	}
+
+	@Unique
+	private boolean enderpocket$rowSpotFree(int x, int y, int w, int h) {
+		for (var child : this.children()) {
+			if (child != this.enderpocket$button && child instanceof AbstractWidget widget && widget.visible
+					&& x < widget.getX() + widget.getWidth() && x + w > widget.getX()
+					&& y < widget.getY() + widget.getHeight() && y + h > widget.getY()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Unique
@@ -112,6 +143,9 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 					target = "Lnet/minecraft/client/gui/screens/inventory/AbstractRecipeBookScreen;extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
 					shift = At.Shift.AFTER))
 	private void enderpocket$afterDim(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
+		// Re-scan placement each frame: all mods' widgets exist by now (init
+		// hook ordering is undefined), and it adapts to recipe-book toggles.
+		this.enderpocket$positionButton();
 		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.topPos,
 				((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible(), this.enderpocket$effectsCount());
 		EnderPanelClient.pushScreen(graphics.pose());
