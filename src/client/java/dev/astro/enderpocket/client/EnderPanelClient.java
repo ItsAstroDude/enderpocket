@@ -113,6 +113,15 @@ public final class EnderPanelClient {
 		bookRespected = true;
 	}
 
+	/**
+	 * Reset the recipe-book handling for a fresh inventory session, so the next
+	 * time the panel opens it may auto-close the book again. Called when the
+	 * inventory screen closes — NOT on resize/widget-rebuild.
+	 */
+	public static void clearBookRespected() {
+		bookRespected = false;
+	}
+
 	public static boolean serverSupported() {
 		try {
 			return ClientPlayNetworking.canSend(PanelOpenPayload.TYPE);

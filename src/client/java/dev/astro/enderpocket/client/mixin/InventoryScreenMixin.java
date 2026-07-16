@@ -297,6 +297,9 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Override
 	public void removed() {
+		// Fresh recipe-book handling next inventory session (the auto-close is
+		// per-session, not until relog).
+		EnderPanelClient.clearBookRespected();
 		if (EnderPanelClient.isOpen() && !EnderPocketConfig.get().rememberOpen) {
 			EnderPanelClient.setOpen(false);
 		}
