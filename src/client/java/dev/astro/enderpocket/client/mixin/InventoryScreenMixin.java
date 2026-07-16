@@ -7,6 +7,7 @@ import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
 import dev.astro.enderpocket.client.EnderPanelClient;
 import dev.astro.enderpocket.client.EnderPocketClient;
+import dev.astro.enderpocket.client.EnderPocketGuiLayout;
 import dev.astro.enderpocket.client.EnderTabButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -48,12 +49,17 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		}
 		// Preferred: a free 20x18 spot in the vanilla button row next to the
 		// recipe book toggle (x 128/152 rel; occupied by e.g. Terrastorage when
-		// present). Scanned live so it adapts to whatever other mods add.
-		int rowY = this.height / 2 - 22;
-		for (int relX : new int[]{128, 152}) {
-			int bx = this.leftPos + relX;
-			if (this.enderpocket$rowSpotFree(bx, rowY, EnderTabButton.ROW_W, EnderTabButton.ROW_H)) {
-				this.enderpocket$button.setPosition(bx, rowY);
+		// present). Scanned live so it adapts to whatever other mods add, and
+		// resource packs can override the spots (EnderPocketGuiLayout).
+		EnderPocketGuiLayout layout = EnderPocketGuiLayout.get();
+		for (int[] spot : layout.buttonRowSpots) {
+			if (spot == null || spot.length != 2) {
+				continue;
+			}
+			int bx = this.leftPos + spot[0];
+			int by = this.topPos + spot[1];
+			if (this.enderpocket$rowSpotFree(bx, by, EnderTabButton.ROW_W, EnderTabButton.ROW_H)) {
+				this.enderpocket$button.setPosition(bx, by);
 				this.enderpocket$button.setWidth(EnderTabButton.ROW_W);
 				this.enderpocket$button.setHeight(EnderTabButton.ROW_H);
 				EnderPanelClient.setButtonInRow(true);
@@ -63,8 +69,8 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		// Fallback: top-right corner outside the GUI, above where the
 		// potion-effect stack starts (EffectsInInventoryMixin shifts it down).
 		this.enderpocket$button.setPosition(
-				this.leftPos + EnderPocketLayout.INV_W + EnderPocketLayout.GAP,
-				this.topPos);
+				this.leftPos + layout.buttonCorner[0],
+				this.topPos + layout.buttonCorner[1]);
 		this.enderpocket$button.setWidth(EnderTabButton.CORNER_SIZE);
 		this.enderpocket$button.setHeight(EnderTabButton.CORNER_SIZE);
 		EnderPanelClient.setButtonInRow(false);
@@ -157,10 +163,17 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 			EnderPanelClient.pushPanelAbs(graphics.pose(), this.leftPos, this.topPos);
 			int px = this.leftPos + EnderPocketLayout.PANEL_REL_X;
 			int py = this.topPos + EnderPocketLayout.PANEL_REL_Y;
-			graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
-					px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, 71, 256, 256);
-			graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
-					px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
+			if (EnderPocketGuiLayout.hasPanelTextureOverride()) {
+				// A resource pack supplied a dedicated 176x78 panel window.
+				graphics.blit(RenderPipelines.GUI_TEXTURED, EnderPocketGuiLayout.panelTexture(),
+						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H,
+						EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H);
+			} else {
+				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
+						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, 71, 256, 256);
+				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
+						px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
+			}
 			EnderPanelClient.popPanelAbs(graphics.pose());
 		}
 	}
@@ -245,8 +258,9 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	protected boolean hasClickedOutside(double mx, double my, int xo, int yo) {
 		if (EnderPanelClient.isOpen()) {
 			float sp = EnderPanelClient.panelScale();
-			double px = xo + EnderPocketLayout.PANEL_REL_X;
-			double py = yo + EnderPanelClient.ANCHOR_Y + EnderPanelClient.panelTy() - sp * EnderPocketLayout.PANEL_H / 2.0;
+			int[] offset = EnderPocketGuiLayout.get().panelOffset;
+			double px = xo + EnderPocketLayout.PANEL_REL_X + offset[0];
+			double py = yo + EnderPanelClient.ANCHOR_Y + offset[1] + EnderPanelClient.panelTy() - sp * EnderPocketLayout.PANEL_H / 2.0;
 			if (mx >= px && mx < px + sp * EnderPocketLayout.PANEL_W && my >= py && my < py + sp * EnderPocketLayout.PANEL_H) {
 				return false;
 			}
