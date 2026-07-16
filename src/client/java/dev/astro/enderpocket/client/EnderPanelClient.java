@@ -34,9 +34,26 @@ public final class EnderPanelClient {
 	public static final float ANCHOR_X = EnderPocketLayout.PANEL_REL_X;
 	public static final float ANCHOR_Y = EnderPocketLayout.PANEL_REL_Y + EnderPocketLayout.PANEL_H / 2.0f;
 
-	/** Where the effect stack starts (below the button) and its per-effect step. */
-	public static final int EFFECTS_TOP = 26;
+	/** Vertical clearance for the button when it sits outside the GUI; per-effect step. */
+	public static final int BUTTON_CLEARANCE = 26;
 	public static final int EFFECT_STEP = 33;
+
+	/**
+	 * Where the ender button ended up: in the vanilla button row inside the GUI
+	 * (row next to the recipe book toggle has free space — e.g. no Terrastorage),
+	 * or outside at the GUI's top-right corner. Set by the screen mixin's
+	 * placement scan each frame.
+	 */
+	private static boolean buttonInRow;
+
+	public static void setButtonInRow(boolean inRow) {
+		buttonInRow = inRow;
+	}
+
+	/** Where the potion-effect stack starts, relative to the GUI top. */
+	public static int effectsTop() {
+		return buttonInRow ? 0 : BUTTON_CLEARANCE;
+	}
 
 	private static boolean open;
 	// Screen (ensemble) transform: scale + offset, pivot = screen centre.
@@ -141,7 +158,7 @@ public final class EnderPanelClient {
 			// (which starts under the button and steps down per effect).
 			if (effectsCount > 0) {
 				int effectsHeight = effectsCount <= 5 ? effectsCount * EFFECT_STEP : 132 + 32;
-				tPanTy = Math.max(0, EFFECTS_TOP + effectsHeight + 4 - EnderPocketLayout.PANEL_REL_Y);
+				tPanTy = Math.max(0, effectsTop() + effectsHeight + 4 - EnderPocketLayout.PANEL_REL_Y);
 			}
 
 			int rightOverflow = leftPos + EnderPocketLayout.PANEL_REL_X + EnderPocketLayout.PANEL_W + 4 - width;

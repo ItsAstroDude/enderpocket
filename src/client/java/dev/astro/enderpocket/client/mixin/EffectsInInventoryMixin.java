@@ -24,7 +24,8 @@ public abstract class EffectsInInventoryMixin {
 			at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;topPos:I"))
 	private int enderpocket$startBelowButton(int topPos) {
 		if (this.screen instanceof InventoryScreen && EnderPanelClient.available(Minecraft.getInstance().player)) {
-			return topPos + EnderPanelClient.EFFECTS_TOP;
+			// No shift needed when the button found a home inside the GUI's row.
+			return topPos + EnderPanelClient.effectsTop();
 		}
 		return topPos;
 	}

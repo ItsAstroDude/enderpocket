@@ -9,14 +9,19 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-/** Small button with an ender chest icon that toggles the panel. */
+/**
+ * Small button with an ender chest icon that toggles the panel. 20x18 when it
+ * sits in the vanilla button row inside the GUI, 22x22 outside at the corner.
+ */
 public class EnderTabButton extends AbstractButton {
-	public static final int SIZE = 22;
+	public static final int ROW_W = 20;
+	public static final int ROW_H = 18;
+	public static final int CORNER_SIZE = 22;
 	private static final Identifier ICON_SPRITE = EnderPocket.id("button/ender_pocket");
 	private final Runnable onToggle;
 
 	public EnderTabButton(int x, int y, Runnable onToggle) {
-		super(x, y, SIZE, SIZE, Component.translatable("enderpocket.button"));
+		super(x, y, CORNER_SIZE, CORNER_SIZE, Component.translatable("enderpocket.button"));
 		this.onToggle = onToggle;
 	}
 
@@ -34,7 +39,7 @@ public class EnderTabButton extends AbstractButton {
 	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		this.extractDefaultSprite(graphics);
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ICON_SPRITE,
-				this.getX() + (SIZE - 16) / 2, this.getY() + (SIZE - 16) / 2, 16, 16);
+				this.getX() + (this.getWidth() - 16) / 2, this.getY() + (this.getHeight() - 16) / 2, 16, 16);
 		if (this.isHovered()) {
 			// Deferred tooltips render outside the shrink transform — anchor at the
 			// untransformed cursor.
