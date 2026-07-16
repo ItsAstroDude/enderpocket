@@ -3,6 +3,7 @@ package dev.astro.enderpocket.client.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
 import dev.astro.enderpocket.client.EnderPanelClient;
 import dev.astro.enderpocket.client.EnderPocketClient;
@@ -57,7 +58,8 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Unique
 	private void enderpocket$onPanelToggled() {
-		if (!EnderPanelClient.isOpen() || EnderPanelClient.isBookRespected()) {
+		if (!EnderPanelClient.isOpen() || EnderPanelClient.isBookRespected()
+				|| !EnderPocketConfig.get().autoCloseRecipeBook) {
 			return;
 		}
 		// Auto-close the recipe book to make room for the full-size panel —
@@ -78,6 +80,11 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 				this.enderpocket$onPanelToggled();
 			}));
 			this.enderpocket$positionButton();
+			// Panel already open (remembered state or the from-anywhere keybind):
+			// give the recipe book auto-close a chance to run.
+			if (EnderPanelClient.isOpen()) {
+				this.enderpocket$onPanelToggled();
+			}
 		} else if (EnderPanelClient.isOpen()) {
 			EnderPanelClient.setOpen(false);
 		}
@@ -108,14 +115,11 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.topPos,
 				((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible(), this.enderpocket$effectsCount());
 		EnderPanelClient.pushScreen(graphics.pose());
-	}
-
-	@Inject(method = "extractBackground", at = @At("TAIL"))
-	private void enderpocket$panelBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
-		if (EnderPanelClient.isOpen()) {
-			// Panel window assembled from the vanilla chest texture so resource
-			// packs (e.g. dark GUI themes) restyle it automatically: title bar +
-			// 3 slot rows, then the bottom border strip.
+		// Panel window drawn here — BEFORE the vanilla GUI texture — so it slides
+		// out from behind the inventory. Assembled from the vanilla chest texture
+		// so resource packs (e.g. dark GUI themes) restyle it automatically:
+		// title bar + 3 slot rows, then the bottom border strip.
+		if (EnderPanelClient.visualOpen()) {
 			EnderPanelClient.pushPanelAbs(graphics.pose(), this.leftPos, this.topPos);
 			int px = this.leftPos + EnderPocketLayout.PANEL_REL_X;
 			int py = this.topPos + EnderPocketLayout.PANEL_REL_Y;
@@ -125,6 +129,10 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 					px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
 			EnderPanelClient.popPanelAbs(graphics.pose());
 		}
+	}
+
+	@Inject(method = "extractBackground", at = @At("TAIL"))
+	private void enderpocket$panelBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
 		EnderPanelClient.popScreen(graphics.pose());
 	}
 
@@ -161,7 +169,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Inject(method = "extractLabels", at = @At("TAIL"))
 	private void enderpocket$panelLabel(GuiGraphicsExtractor graphics, int mouseX, int mouseY, CallbackInfo ci) {
-		if (EnderPanelClient.isOpen()) {
+		if (EnderPanelClient.slotsInteractive()) {
 			EnderPanelClient.pushPanelRel(graphics.pose());
 			graphics.text(this.font, ENDERPOCKET_PANEL_TITLE,
 					EnderPocketLayout.PANEL_REL_X + 8, EnderPocketLayout.PANEL_REL_Y + 6, -12566464, false);
@@ -229,7 +237,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Override
 	public void removed() {
-		if (EnderPanelClient.isOpen()) {
+		if (EnderPanelClient.isOpen() && !EnderPocketConfig.get().rememberOpen) {
 			EnderPanelClient.setOpen(false);
 		}
 		super.removed();

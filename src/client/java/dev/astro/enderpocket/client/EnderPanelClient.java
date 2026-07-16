@@ -1,28 +1,34 @@
 package dev.astro.enderpocket.client;
 
 import dev.astro.enderpocket.EnderPocketAttachments;
+import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
 import dev.astro.enderpocket.PanelOpenPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import org.joml.Matrix3x2fStack;
 
 /**
- * Client-side panel state plus the two fitting transforms (Astro's rules):
+ * Client-side panel state plus the fitting transforms:
  *
- * - Recipe book CLOSED: the inventory must not move or scale at all. If the
- *   panel doesn't fit in the free space to the right, only the PANEL shrinks,
- *   anchored at its left-centre edge ("panel transform").
- * - Recipe book OPEN (side-by-side): the whole ensemble (book + inventory +
- *   full-size panel) shrinks around the screen centre ("screen transform").
+ * - Panel always opens FULL SIZE, sliding out from behind the inventory.
+ * - Too wide for the screen → the inventory slides left (screen transform,
+ *   translate-only) to make room.
+ * - Active potion effects → the panel drops below the effect stack (panel
+ *   transform vertical offset).
+ * - Recipe book kept open by the user, or nothing else fits → the whole
+ *   ensemble shrinks around the screen centre (screen transform, scaled).
  *
- * The two are mutually exclusive; both animate with a frame-rate independent
- * exponential ease. Mouse input is remapped through the inverse transforms.
+ * Everything animates with a frame-rate independent exponential ease. Mouse
+ * input is remapped through the inverse transforms.
  */
 public final class EnderPanelClient {
 	private static final float EASE_MS = 60.0f;
+	private static final float SLIDE_EASE_MS = 90.0f;
 
 	/** Panel scale anchor, relative to the GUI origin (left edge, vertical centre of the panel). */
 	public static final float ANCHOR_X = EnderPocketLayout.PANEL_REL_X;
@@ -43,6 +49,8 @@ public final class EnderPanelClient {
 	// about the anchor point.
 	private static float panScale = 1.0f;
 	private static float panTy;
+	// Slide-out progress: 0 = tucked behind the inventory, 1 = fully out.
+	private static float panProgress;
 	private static long lastMs = -1L;
 	// Recipe book handling: auto-closed once when the panel opens; if the user
 	// re-opens it, respect that (fall back to the ensemble shrink) until the
@@ -67,6 +75,7 @@ public final class EnderPanelClient {
 		scrTy = 0.0f;
 		panScale = 1.0f;
 		panTy = 0.0f;
+		panProgress = 0.0f;
 		lastMs = -1L;
 		bookRespected = false;
 	}
@@ -88,7 +97,8 @@ public final class EnderPanelClient {
 	}
 
 	public static boolean available(LocalPlayer player) {
-		return player != null && serverSupported() && player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false);
+		return player != null && serverSupported()
+				&& (!EnderPocketConfig.get().requireUnlock || player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false));
 	}
 
 	public static void setOpen(boolean o) {
@@ -98,6 +108,11 @@ public final class EnderPanelClient {
 		}
 		if (o && !available(player)) {
 			return;
+		}
+		if (open != o && EnderPocketConfig.get().sounds) {
+			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(
+					o ? SoundEvents.ENDER_CHEST_OPEN : SoundEvents.ENDER_CHEST_CLOSE,
+					o ? 1.0f : 0.9f, 0.6f));
 		}
 		open = o;
 		player.setAttached(EnderPocketAttachments.PANEL_OPEN, o);
@@ -159,11 +174,28 @@ public final class EnderPanelClient {
 		long now = System.nanoTime() / 1_000_000L;
 		float dt = lastMs < 0 ? 1000.0f : now - lastMs;
 		lastMs = now;
-		float k = 1.0f - (float) Math.exp(-dt / EASE_MS);
+		float speed = EnderPocketConfig.get().animationSpeed;
+		float k = 1.0f - (float) Math.exp(-dt * speed / EASE_MS);
+		float kSlide = 1.0f - (float) Math.exp(-dt * speed / SLIDE_EASE_MS);
 		scrScale = ease(scrScale, tScrScale, k, 0.002f);
 		scrTx = ease(scrTx, tScrTx, k, 0.35f);
 		scrTy = ease(scrTy, tScrTy, k, 0.35f);
 		panTy = ease(panTy, tPanTy, k, 0.35f);
+		panProgress = ease(panProgress, open ? 1.0f : 0.0f, kSlide, 0.002f);
+	}
+
+	/** True while the panel should be drawn at all (open, or still sliding shut). */
+	public static boolean visualOpen() {
+		return open || panProgress > 0.01f;
+	}
+
+	/** True once the panel has (almost) settled — slots render and accept input. */
+	public static boolean slotsInteractive() {
+		return open && panProgress > 0.95f;
+	}
+
+	private static float slideX() {
+		return -(EnderPocketLayout.PANEL_W + EnderPocketLayout.GAP) * (1.0f - panProgress);
 	}
 
 	private static float ease(float cur, float target, float k, float snap) {
@@ -231,7 +263,7 @@ public final class EnderPanelClient {
 	// ---------------------------------------------------------------- panel tf
 
 	public static boolean panelTransformActive() {
-		return panScale < 0.9995f || Math.abs(panTy) > 0.01f;
+		return panScale < 0.9995f || Math.abs(panTy) > 0.01f || panProgress < 0.9995f;
 	}
 
 	public static float panelScale() {
@@ -250,7 +282,7 @@ public final class EnderPanelClient {
 	public static void pushPanelRel(Matrix3x2fStack pose) {
 		if (panelTransformActive()) {
 			pose.pushMatrix();
-			pose.translate(ANCHOR_X, ANCHOR_Y + panTy);
+			pose.translate(ANCHOR_X + slideX(), ANCHOR_Y + panTy);
 			pose.scale(panScale, panScale);
 			pose.translate(-ANCHOR_X, -ANCHOR_Y);
 		}
@@ -268,7 +300,7 @@ public final class EnderPanelClient {
 			float ax = leftPos + ANCHOR_X;
 			float ay = topPos + ANCHOR_Y;
 			pose.pushMatrix();
-			pose.translate(ax, ay + panTy);
+			pose.translate(ax + slideX(), ay + panTy);
 			pose.scale(panScale, panScale);
 			pose.translate(-ax, -ay);
 		}
@@ -280,7 +312,7 @@ public final class EnderPanelClient {
 
 	/** Inverse panel mapping for GUI-relative coordinates. */
 	public static double invPanelRelX(double xRel) {
-		return ANCHOR_X + (xRel - ANCHOR_X) / panScale;
+		return ANCHOR_X + (xRel - slideX() - ANCHOR_X) / panScale;
 	}
 
 	public static double invPanelRelY(double yRel) {

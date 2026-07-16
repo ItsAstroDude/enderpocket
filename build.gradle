@@ -7,11 +7,15 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	// Optional integrations: ModMenu (config button) + Cloth Config (config screen).
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases/'
+	}
+	maven {
+		name = 'shedaniel'
+		url = 'https://maven.shedaniel.me/'
+	}
 }
 
 loom {
@@ -32,6 +36,12 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Optional at runtime: config button in ModMenu, screen built with Cloth Config.
+	// Compiled against local jars (libs/) — the TerraformersMC maven kept failing
+	// mid-download, and in the no-remap era release jars are directly usable.
+	compileOnly files("libs/modmenu-20.0.1.jar")
+	compileOnly files("libs/cloth-config-26.2.155.jar")
 }
 
 processResources {
