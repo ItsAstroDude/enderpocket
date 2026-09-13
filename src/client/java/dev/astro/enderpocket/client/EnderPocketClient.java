@@ -18,11 +18,16 @@ import net.minecraft.world.inventory.RecipeBookType;
 
 public class EnderPocketClient implements ClientModInitializer {
 	public static KeyMapping toggleKey;
+	public static KeyMapping peekKey;
 
 	@Override
 	public void onInitializeClient() {
 		toggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.enderpocket.toggle",
+				InputConstants.UNKNOWN.getValue(),
+				KeyMapping.Category.INVENTORY));
+		peekKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.enderpocket.peek",
 				InputConstants.UNKNOWN.getValue(),
 				KeyMapping.Category.INVENTORY));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EnderPanelClient.reset());

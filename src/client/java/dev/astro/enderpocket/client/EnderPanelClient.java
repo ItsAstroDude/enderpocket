@@ -64,6 +64,9 @@ public final class EnderPanelClient {
 	}
 
 	private static boolean open;
+	// True while the peek key is held: shows the panel read-only without
+	// flipping PANEL_OPEN — no server round trip, no interactivity.
+	private static boolean peeking;
 	// Screen (ensemble) transform: scale + offset, pivot = screen centre.
 	// Also used translate-only (scale 1) to slide the inventory left when the
 	// full-size panel needs room on the right.
@@ -95,6 +98,7 @@ public final class EnderPanelClient {
 
 	public static void reset() {
 		open = false;
+		peeking = false;
 		scrScale = 1.0f;
 		scrTx = 0.0f;
 		scrTy = 0.0f;
@@ -159,6 +163,15 @@ public final class EnderPanelClient {
 		setOpen(!open);
 	}
 
+	/** Hold-to-peek: shows the panel read-only, independent of {@link #open}. */
+	public static void setPeeking(boolean p) {
+		peeking = p;
+	}
+
+	public static boolean isPeeking() {
+		return peeking;
+	}
+
 	/**
 	 * Advance the animation one frame and compute the target transforms for the
 	 * current layout. Called once per frame, from the background extract pass.
@@ -170,7 +183,7 @@ public final class EnderPanelClient {
 		float tScrTx = 0.0f;
 		float tScrTy = 0.0f;
 		float tPanTy = 0.0f;
-		if (open) {
+		if (open || peeking) {
 			// With active potion effects the panel drops below the effect stack
 			// (which starts under the button and steps down per effect).
 			if (effectsCount > 0) {
@@ -215,12 +228,12 @@ public final class EnderPanelClient {
 		scrTx = ease(scrTx, tScrTx, k, 0.35f);
 		scrTy = ease(scrTy, tScrTy, k, 0.35f);
 		panTy = ease(panTy, tPanTy, k, 0.35f);
-		panProgress = ease(panProgress, open ? 1.0f : 0.0f, kSlide, 0.002f);
+		panProgress = ease(panProgress, (open || peeking) ? 1.0f : 0.0f, kSlide, 0.002f);
 	}
 
 	/** True while the panel should be drawn at all (open, or still sliding shut). */
 	public static boolean visualOpen() {
-		return open || panProgress > 0.01f;
+		return open || peeking || panProgress > 0.01f;
 	}
 
 	/** True once the panel has (almost) settled — slots render and accept input. */

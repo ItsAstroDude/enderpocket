@@ -182,6 +182,16 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 						px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
 			}
 			graphics.text(this.font, ENDERPOCKET_PANEL_TITLE, px + 8, py + 6, -12566464, false);
+			int enderpocket$filled = 0;
+			for (Slot slot : this.getMenu().slots) {
+				if (slot instanceof EnderSlot && !slot.getItem().isEmpty()) {
+					enderpocket$filled++;
+				}
+			}
+			Component enderpocket$count = Component.translatable("enderpocket.slots", enderpocket$filled,
+					EnderPocketLayout.ENDER_COLS * EnderPocketLayout.ENDER_ROWS);
+			int enderpocket$countWidth = this.font.width(enderpocket$count);
+			graphics.text(this.font, enderpocket$count, px + EnderPocketLayout.PANEL_W - 8 - enderpocket$countWidth, py + 6, -12566464, false);
 			if (!EnderPanelClient.slotsInteractive()) {
 				for (Slot slot : this.getMenu().slots) {
 					if (slot instanceof EnderSlot) {
@@ -285,6 +295,13 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
+		if (EnderPocketClient.peekKey != null && !EnderPocketClient.peekKey.isUnbound()
+				&& EnderPocketClient.peekKey.matches(event)
+				&& !EnderPanelClient.isOpen()
+				&& EnderPanelClient.available(this.minecraft.player)) {
+			EnderPanelClient.setPeeking(true);
+			return true;
+		}
 		if (EnderPocketClient.toggleKey != null && !EnderPocketClient.toggleKey.isUnbound()
 				&& EnderPocketClient.toggleKey.matches(event)
 				&& EnderPanelClient.available(this.minecraft.player)) {
@@ -293,6 +310,14 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 			return true;
 		}
 		return super.keyPressed(event);
+	}
+
+	@Override
+	public boolean keyReleased(KeyEvent event) {
+		if (EnderPocketClient.peekKey != null && EnderPocketClient.peekKey.matches(event)) {
+			EnderPanelClient.setPeeking(false);
+		}
+		return super.keyReleased(event);
 	}
 
 	@Override

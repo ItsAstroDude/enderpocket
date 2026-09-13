@@ -11,5 +11,7 @@
 	"enderpocket.config.autoCloseRecipeBook.tooltip": "Close the recipe book when the panel opens. Re-opening the book is respected — everything scales to fit instead.",
 	"enderpocket.config.sounds": "Sounds",
 	"enderpocket.config.animationSpeed": "Animation speed",
-	"enderpocket.config.animationSpeed.tooltip": "Higher = snappier animations. 1.0 is the default feel."
+	"enderpocket.config.animationSpeed.tooltip": "Higher = snappier animations. 1.0 is the default feel.",
+	"key.enderpocket.peek": "Peek Ender Chest",
+	"enderpocket.slots": "%s/%s"
 }

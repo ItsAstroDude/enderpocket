@@ -11,5 +11,7 @@
 	"enderpocket.config.autoCloseRecipeBook.tooltip": "Închide cartea de rețete când se deschide panoul. Dacă o redeschizi, rămâne deschisă — totul se scalează ca să încapă.",
 	"enderpocket.config.sounds": "Sunete",
 	"enderpocket.config.animationSpeed": "Viteza animațiilor",
-	"enderpocket.config.animationSpeed.tooltip": "Mai mare = animații mai rapide. 1.0 este valoarea implicită."
+	"enderpocket.config.animationSpeed.tooltip": "Mai mare = animații mai rapide. 1.0 este valoarea implicită.",
+	"key.enderpocket.peek": "Privește rapid în Cufărul Ender",
+	"enderpocket.slots": "%s/%s"
 }
