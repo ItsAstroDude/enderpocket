@@ -30,6 +30,8 @@ public final class ChestPanelClient {
 
 	private static @Nullable EnderTabButton button;
 	private static float shift;
+	// The leftPos the screen's widgets are currently laid out for.
+	private static int appliedLeft;
 	private static long lastMs = -1L;
 
 	private ChestPanelClient() {
@@ -69,10 +71,13 @@ public final class ChestPanelClient {
 			EnderTabButton chestButton = new EnderTabButton(0, 0, EnderPanelClient::toggle);
 			button = chestButton;
 			Screens.getButtons(screen).add(chestButton);
-			// (Re)init: jump straight to the settled layout.
+			// (Re)init: jump straight to the settled layout — but only from the
+			// first frame on. Leaving leftPos centred during init means every mod
+			// lays its widgets out against the vanilla position, and applyShift
+			// then moves them all by the same amount.
 			shift = targetShift(containerScreen);
 			lastMs = -1L;
-			applyShift(containerScreen);
+			appliedLeft = acc(containerScreen).enderpocket$leftPos();
 			positionButton(containerScreen, chestButton);
 
 			ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
@@ -119,8 +124,24 @@ public final class ChestPanelClient {
 		return left - centered;
 	}
 
+	/**
+	 * Move the window to centre + shift. Other mods' widgets (Terrastorage's
+	 * button column, sort buttons...) are placed once at init relative to
+	 * leftPos, so they're carried along by the same delta.
+	 */
 	private static void applyShift(AbstractContainerScreen<?> screen) {
-		acc(screen).enderpocket$setLeftPos(centeredLeft(screen) + Math.round(shift));
+		int left = centeredLeft(screen) + Math.round(shift);
+		int delta = left - appliedLeft;
+		if (delta == 0) {
+			return;
+		}
+		for (AbstractWidget widget : Screens.getButtons(screen)) {
+			if (widget != button) {
+				widget.setX(widget.getX() + delta);
+			}
+		}
+		appliedLeft = left;
+		acc(screen).enderpocket$setLeftPos(left);
 	}
 
 	private static void positionButton(AbstractContainerScreen<?> screen, EnderTabButton chestButton) {
