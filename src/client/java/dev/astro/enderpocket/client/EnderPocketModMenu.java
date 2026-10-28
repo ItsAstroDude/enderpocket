@@ -28,6 +28,11 @@ public class EnderPocketModMenu implements ModMenuApi {
 					.setTooltip(Component.translatable("enderpocket.config.requireUnlock.tooltip"))
 					.setSaveConsumer(v -> config.requireUnlock = v)
 					.build());
+			general.addEntry(entries.startBooleanToggle(Component.translatable("enderpocket.config.requireEnderChestItem"), config.requireEnderChestItem)
+					.setDefaultValue(false)
+					.setTooltip(Component.translatable("enderpocket.config.requireEnderChestItem.tooltip"))
+					.setSaveConsumer(v -> config.requireEnderChestItem = v)
+					.build());
 			general.addEntry(entries.startBooleanToggle(Component.translatable("enderpocket.config.rememberOpen"), config.rememberOpen)
 					.setDefaultValue(false)
 					.setTooltip(Component.translatable("enderpocket.config.rememberOpen.tooltip"))

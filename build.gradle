@@ -40,8 +40,8 @@ dependencies {
 	// Optional at runtime: config button in ModMenu, screen built with Cloth Config.
 	// Compiled against local jars (libs/) — the TerraformersMC maven kept failing
 	// mid-download, and in the no-remap era release jars are directly usable.
-	compileOnly files("libs/modmenu-20.0.1.jar")
-	compileOnly files("libs/cloth-config-26.2.155.jar")
+	compileOnly files("libs/modmenu-${project.modmenu_version}.jar")
+	compileOnly files("libs/cloth-config-${project.cloth_config_version}.jar")
 }
 
 processResources {

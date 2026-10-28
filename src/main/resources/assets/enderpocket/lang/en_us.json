@@ -13,5 +13,10 @@
 	"enderpocket.config.animationSpeed": "Animation speed",
 	"enderpocket.config.animationSpeed.tooltip": "Higher = snappier animations. 1.0 is the default feel.",
 	"key.enderpocket.peek": "Peek Ender Chest",
-	"enderpocket.slots": "%s/%s"
+	"enderpocket.slots": "%s/%s",
+	"enderpocket.config.requireEnderChestItem": "Require carrying an ender chest",
+	"enderpocket.config.requireEnderChestItem.tooltip": "The panel only works while you have an ender chest item in your inventory. On dedicated servers the server's own setting is what counts.",
+	"enderpocket.button.needs_item": "Carry an ender chest to use this",
+	"enderpocket.sort": "Sort",
+	"enderpocket.quick_stack": "Quick-stack: deposit items the ender chest already holds (hotbar excluded)"
 }

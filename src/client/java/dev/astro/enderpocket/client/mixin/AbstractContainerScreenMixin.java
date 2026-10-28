@@ -3,6 +3,7 @@ package dev.astro.enderpocket.client.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.astro.enderpocket.EnderSlot;
+import dev.astro.enderpocket.client.ChestPanelClient;
 import dev.astro.enderpocket.client.EnderPanelClient;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -11,11 +12,15 @@ import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * When the panel-only transform is active (recipe book closed, tight space),
  * ender slots render, highlight and hit-test through the panel scale while the
- * rest of the inventory screen stays untouched.
+ * rest of the inventory screen stays untouched. Chest screens only need the
+ * panel excluded from the "clicked outside the window" check.
  */
 @Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenMixin {
@@ -66,6 +71,13 @@ public abstract class AbstractContainerScreenMixin {
 			EnderPanelClient.popPanelRel(graphics.pose());
 		} else {
 			original.call(graphics);
+		}
+	}
+
+	@Inject(method = "hasClickedOutside", at = @At("HEAD"), cancellable = true)
+	private void enderpocket$chestPanelInside(double mx, double my, int xo, int yo, CallbackInfoReturnable<Boolean> cir) {
+		if (ChestPanelClient.isChestScreen(this) && ChestPanelClient.covers((AbstractContainerScreen<?>) (Object) this, mx, my)) {
+			cir.setReturnValue(false);
 		}
 	}
 

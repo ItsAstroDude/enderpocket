@@ -3,10 +3,14 @@ package dev.astro.enderpocket.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.astro.enderpocket.EnderPocket;
 import dev.astro.enderpocket.EnderPocketConfig;
+import dev.astro.enderpocket.EnderPocketMenus;
+import dev.astro.enderpocket.EnderPocketRules;
+import dev.astro.enderpocket.RulesPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.KeyMapping;
@@ -30,8 +34,19 @@ public class EnderPocketClient implements ClientModInitializer {
 				"key.enderpocket.peek",
 				InputConstants.UNKNOWN.getValue(),
 				KeyMapping.Category.INVENTORY));
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EnderPanelClient.reset());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			EnderPanelClient.reset();
+			EnderPocketRules.clearRemote();
+		});
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> EnderPanelClient.reset());
+		ClientPlayNetworking.registerGlobalReceiver(RulesPayload.TYPE, (payload, context) -> {
+			// Singleplayer/LAN host: both sides already read the same live config.
+			if (!context.client().isLocalServer()) {
+				EnderPocketRules.setRemote(payload.requireUnlock(), payload.requireEnderChestItem());
+			}
+		});
+		EnderPocketMenus.clientServerSupported = EnderPanelClient::serverSupported;
+		ChestPanelClient.register();
 
 		// Resource packs can reposition the button/panel and re-skin the panel —
 		// see EnderPocketGuiLayout.
@@ -51,7 +66,7 @@ public class EnderPocketClient implements ClientModInitializer {
 		// with the panel already out.
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (toggleKey.consumeClick()) {
-				if (client.gui.screen() == null && client.player != null && EnderPanelClient.available(client.player)) {
+				if (client.gui.screen() == null && client.player != null && EnderPanelClient.usable(client.player)) {
 					if (EnderPocketConfig.get().autoCloseRecipeBook && !EnderPanelClient.isBookRespected()) {
 						// Pre-close the recipe book in its persisted settings so the
 						// screen inits cleanly with the book shut.

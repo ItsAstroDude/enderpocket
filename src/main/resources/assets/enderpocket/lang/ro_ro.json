@@ -13,5 +13,10 @@
 	"enderpocket.config.animationSpeed": "Viteza animațiilor",
 	"enderpocket.config.animationSpeed.tooltip": "Mai mare = animații mai rapide. 1.0 este valoarea implicită.",
 	"key.enderpocket.peek": "Privește rapid în Cufărul Ender",
-	"enderpocket.slots": "%s/%s"
+	"enderpocket.slots": "%s/%s",
+	"enderpocket.config.requireEnderChestItem": "Necesită un cufăr ender la tine",
+	"enderpocket.config.requireEnderChestItem.tooltip": "Panoul funcționează doar cât timp ai un cufăr ender în inventar. Pe servere dedicate contează setarea serverului.",
+	"enderpocket.button.needs_item": "Ai nevoie de un cufăr ender în inventar",
+	"enderpocket.sort": "Sortează",
+	"enderpocket.quick_stack": "Depunere rapidă: mută obiectele pe care cufărul ender le are deja (fără bara rapidă)"
 }

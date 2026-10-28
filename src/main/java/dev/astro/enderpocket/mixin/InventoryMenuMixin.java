@@ -1,7 +1,9 @@
 package dev.astro.enderpocket.mixin;
 
-import dev.astro.enderpocket.EnderPocketAttachments;
 import dev.astro.enderpocket.EnderPocketLayout;
+import dev.astro.enderpocket.EnderPocketMenu;
+import dev.astro.enderpocket.EnderPocketMenus;
+import dev.astro.enderpocket.EnderPocketRules;
 import dev.astro.enderpocket.EnderSlot;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -9,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractCraftingMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,9 +19,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(InventoryMenu.class)
-public abstract class InventoryMenuMixin extends AbstractCraftingMenu {
+public abstract class InventoryMenuMixin extends AbstractCraftingMenu implements EnderPocketMenu {
 	protected InventoryMenuMixin(MenuType<?> menuType, int containerId, int width, int height) {
 		super(menuType, containerId, width, height);
+	}
+
+	@Override
+	public int enderpocket$enderStart() {
+		return EnderPocketLayout.ENDER_SLOT_START;
 	}
 
 	@Inject(method = "<init>", at = @At("TAIL"))
@@ -41,55 +47,18 @@ public abstract class InventoryMenuMixin extends AbstractCraftingMenu {
 		int end = EnderPocketLayout.ENDER_SLOT_END;
 		if (slotIndex >= start && slotIndex < end) {
 			// Ender slot -> player inventory (main + hotbar), like a chest.
-			Slot slot = this.slots.get(slotIndex);
-			if (!slot.hasItem()) {
-				cir.setReturnValue(ItemStack.EMPTY);
-				return;
-			}
-			ItemStack stack = slot.getItem();
-			ItemStack copy = stack.copy();
-			if (!this.moveItemStackTo(stack, 9, 45, true)) {
-				cir.setReturnValue(ItemStack.EMPTY);
-				return;
-			}
-			if (stack.isEmpty()) {
-				slot.setByPlayer(ItemStack.EMPTY, copy);
-			} else {
-				slot.setChanged();
-			}
-			if (stack.getCount() == copy.getCount()) {
-				cir.setReturnValue(ItemStack.EMPTY);
-				return;
-			}
-			slot.onTake(player, stack);
-			cir.setReturnValue(copy);
+			ItemStack moved = EnderPocketMenus.quickMoveTo(this, player, slotIndex, 9, 45, true);
+			cir.setReturnValue(moved == null ? ItemStack.EMPTY : moved);
 			return;
 		}
 
-		boolean panelOpen = player.getAttachedOrElse(EnderPocketAttachments.PANEL_OPEN, false);
-		if (panelOpen && slotIndex >= 9 && slotIndex < 45) {
+		if (EnderPocketRules.panelActive(player) && slotIndex >= 9 && slotIndex < 45) {
 			// Panel open: shift-click from main inventory/hotbar deposits into the
 			// ender chest, chest-GUI style. If nothing fits, fall through to vanilla.
-			Slot slot = this.slots.get(slotIndex);
-			if (!slot.hasItem()) {
-				return;
+			ItemStack moved = EnderPocketMenus.quickMoveTo(this, player, slotIndex, start, end, false);
+			if (moved != null) {
+				cir.setReturnValue(moved);
 			}
-			ItemStack stack = slot.getItem();
-			ItemStack copy = stack.copy();
-			if (!this.moveItemStackTo(stack, start, end, false)) {
-				return;
-			}
-			if (stack.isEmpty()) {
-				slot.setByPlayer(ItemStack.EMPTY, copy);
-			} else {
-				slot.setChanged();
-			}
-			if (stack.getCount() == copy.getCount()) {
-				cir.setReturnValue(ItemStack.EMPTY);
-				return;
-			}
-			slot.onTake(player, stack);
-			cir.setReturnValue(copy);
 		}
 	}
 }

@@ -3,6 +3,7 @@ package dev.astro.enderpocket.client;
 import dev.astro.enderpocket.EnderPocketAttachments;
 import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
+import dev.astro.enderpocket.EnderPocketRules;
 import dev.astro.enderpocket.PanelOpenPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -134,9 +135,21 @@ public final class EnderPanelClient {
 		}
 	}
 
-	public static boolean available(LocalPlayer player) {
-		return player != null && serverSupported()
-				&& (!EnderPocketConfig.get().requireUnlock || player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false));
+	/** The button exists: server has the mod and the unlock rule is met. */
+	public static boolean unlocked(LocalPlayer player) {
+		return player != null && serverSupported() && EnderPocketRules.unlocked(player);
+	}
+
+	/** The panel can be opened right now (also checks the carry-an-ender-chest rule). */
+	public static boolean usable(LocalPlayer player) {
+		return player != null && serverSupported() && EnderPocketRules.canUse(player);
+	}
+
+	/** Close the panel if the rules stopped allowing it (e.g. the ender chest item was dropped). */
+	public static void enforceRules(LocalPlayer player) {
+		if (open && !usable(player)) {
+			setOpen(false);
+		}
 	}
 
 	public static void setOpen(boolean o) {
@@ -144,7 +157,7 @@ public final class EnderPanelClient {
 		if (player == null) {
 			return;
 		}
-		if (o && !available(player)) {
+		if (o && !usable(player)) {
 			return;
 		}
 		if (open != o && EnderPocketConfig.get().sounds) {
@@ -375,6 +388,15 @@ public final class EnderPanelClient {
 
 	public static void popInventoryClip(GuiGraphicsExtractor graphics) {
 		graphics.disableScissor();
+	}
+
+	/** Raw screen mouse → panel-local coords (0,0 = panel window top-left), through both transforms. */
+	public static double localX(double mx, int leftPos) {
+		return invPanelRelX(remapX(mx) - leftPos) - EnderPocketLayout.PANEL_REL_X;
+	}
+
+	public static double localY(double my, int topPos) {
+		return invPanelRelY(remapY(my) - topPos) - EnderPocketLayout.PANEL_REL_Y;
 	}
 
 	/** Inverse panel mapping for GUI-relative coordinates. */

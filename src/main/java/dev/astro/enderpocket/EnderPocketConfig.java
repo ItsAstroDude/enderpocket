@@ -10,8 +10,9 @@ import java.nio.file.Path;
 
 /**
  * Plain JSON config at {@code config/enderpocket.json}. Read by both sides:
- * {@link #requireUnlock} governs server behaviour (the server's own file wins
- * on dedicated servers); the rest are client-side preferences.
+ * {@link #requireUnlock} and {@link #requireEnderChestItem} govern server
+ * behaviour (the server's own file wins, see {@link EnderPocketRules}); the
+ * rest are client-side preferences.
  */
 public class EnderPocketConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -19,6 +20,8 @@ public class EnderPocketConfig {
 
 	/** Button/panel only after the player has opened a physical ender chest in this world. */
 	public boolean requireUnlock = true;
+	/** Panel only works while an ender chest item is in the player's inventory (server rule). */
+	public boolean requireEnderChestItem = false;
 	/** Keep the panel open across inventory opens (per game session). */
 	public boolean rememberOpen = false;
 	/** Auto-close the recipe book (once) when the panel opens. */

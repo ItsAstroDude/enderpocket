@@ -2,6 +2,7 @@ package dev.astro.enderpocket;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -20,11 +21,23 @@ public class EnderPocket implements ModInitializer {
 		EnderPocketConfig.load();
 		EnderPocketAttachments.init();
 		PayloadTypeRegistry.serverboundPlay().register(PanelOpenPayload.TYPE, PanelOpenPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(PanelActionPayload.TYPE, PanelActionPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(RulesPayload.TYPE, RulesPayload.CODEC);
+
 		ServerPlayNetworking.registerGlobalReceiver(PanelOpenPayload.TYPE, (payload, context) -> {
 			var player = context.player();
-			boolean allowed = !EnderPocketConfig.get().requireUnlock
-					|| player.getAttachedOrElse(EnderPocketAttachments.UNLOCKED, false);
-			player.setAttached(EnderPocketAttachments.PANEL_OPEN, payload.open() && allowed);
+			player.setAttached(EnderPocketAttachments.PANEL_OPEN, payload.open() && EnderPocketRules.canUse(player));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PanelActionPayload.TYPE,
+				(payload, context) -> EnderPocketActions.handle(context.player(), payload.action()));
+
+		// Tell modded clients the server's rules, so their button matches what
+		// the server will actually allow.
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			if (ServerPlayNetworking.canSend(handler.player, RulesPayload.TYPE)) {
+				EnderPocketConfig config = EnderPocketConfig.get();
+				sender.sendPacket(new RulesPayload(config.requireUnlock, config.requireEnderChestItem));
+			}
 		});
 	}
 }

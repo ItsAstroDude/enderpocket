@@ -17,7 +17,7 @@ new feature → bump the middle (`0.2.x` → `0.3.0`).
 
 ```powershell
 cd C:\Users\andre\Desktop\Code\enderpocket
-$env:JAVA_HOME = 'C:\Users\andre\.jdks\jdk-25.0.3+9'
+$env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot'
 .\gradlew.bat build
 ```
 
@@ -49,7 +49,7 @@ modrinth.com → your project → **Versions → Create version**:
 - **Version number**: must match the jar (e.g. `0.2.2`)
 - **Type**: Release
 - **File**: the jar from `build\libs`
-- **Game version** 26.2, **loader** Fabric, dependency **Fabric API** (required)
+- **Game version** 26.3, **loader** Fabric, dependency **Fabric API** (required)
 - **Changelog**: markdown; a short `## Fixed` / `## Added` / `## Changed` list is plenty
 
 ## Gotchas
@@ -61,8 +61,8 @@ modrinth.com → your project → **Versions → Create version**:
   easy to confuse yourself; always bump first.
 - **libs folder**: `libs\modmenu-*.jar` and `libs\cloth-config-*.jar` are compile-time
   copies used by the build. Don't delete them. If you ever update to a new Minecraft
-  version, replace them with the matching jars from your mods folder and update the
-  file names in `build.gradle`.
+  version, put the matching jars in `libs\` and set `modmenu_version` /
+  `cloth_config_version` in `gradle.properties` (the file names are built from those).
 - **New Minecraft version**: also update `minecraft_version`, `loader_version` and
   `fabric_api_version` in `gradle.properties` (values from https://fabricmc.net/develop),
   then expect some code fixes — that's a bigger job than a routine release.

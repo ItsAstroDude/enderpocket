@@ -3,7 +3,7 @@
 Open your **real ender chest** straight from the inventory screen. No chest nearby, no commands,
 no new items — just a button. (Internally codenamed *EnderPocket*.)
 
-![Fabric](https://img.shields.io/badge/loader-Fabric-blue) ![Minecraft 26.2](https://img.shields.io/badge/minecraft-26.2-green)
+![Fabric](https://img.shields.io/badge/loader-Fabric-blue) ![Minecraft 26.2](https://img.shields.io/badge/minecraft-26.3-green)
 
 ## What it does
 
@@ -12,6 +12,11 @@ no new items — just a button. (Internally codenamed *EnderPocket*.)
   with every physical ender chest you use anywhere else.
 - Shift-click works both ways, chest-style: deposit from your inventory while the panel is open,
   pull items back out with a click.
+- **Works next to chests too:** chests, barrels, minecart chests and shulker boxes get a small
+  button in their title bar. The panel opens on the left, and shift-clicking loot from the chest
+  sends it straight into your ender chest.
+- **Sort** and **Quick-stack** buttons on the panel: tidy the ender chest, or deposit every
+  inventory item it already holds (hotbar excluded).
 - **Earned, not given:** the button only appears after you've opened a real ender chest at least
   once in that world. The unlock is per-world, saves with your player, and survives death.
 - Smart fitting: if there isn't enough horizontal space, the panel gently shrinks to fit —
@@ -26,6 +31,12 @@ Fully multiplayer-safe — all item movement goes through the vanilla server-sid
 (no client-side cheating, no dupes). The server needs the mod too; on servers without it, the
 button simply hides itself.
 
+Server rules (in the server's `config/enderpocket.json`, sent to players when they join):
+
+- `requireUnlock` (default `true`): the button only appears after opening a real ender chest.
+- `requireEnderChestItem` (default `false`): the panel only works while the player carries an
+  ender chest item. Good for survival servers that want it to cost something.
+
 ## Resource pack integration
 
 The mod follows your pack's GUI theme automatically — the button is the vanilla ender chest
@@ -33,6 +44,8 @@ item (so it matches your item textures), and the panel window is assembled at ru
 your pack's own `generic_54.png` chest texture. For packs that restyle the inventory layout
 more aggressively, the rest is overridable too:
 
+- **Sort / Quick-stack icons**: `assets/enderpocket/textures/gui/sprites/sort.png` and
+  `quick_stack.png` (7×7).
 - **Dedicated panel window**: `assets/enderpocket/textures/gui/ender_panel.png` (176×78) —
   if present, it's used instead of the generic_54 composite. Slots sit at x=8+col·18, y=18+row·18.
 - **Positions**: `assets/enderpocket/gui_layout.json` — all coordinates relative to the
@@ -54,7 +67,7 @@ effect list gets pushed down when the button uses the corner spot.
 
 ## Requirements
 
-- Minecraft **26.2**
+- Minecraft **26.3**
 - Fabric Loader **0.19.3+**
 - Fabric API
 

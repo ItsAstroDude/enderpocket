@@ -5,10 +5,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.astro.enderpocket.EnderPocketConfig;
 import dev.astro.enderpocket.EnderPocketLayout;
-import dev.astro.enderpocket.EnderSlot;
 import dev.astro.enderpocket.client.EnderPanelClient;
 import dev.astro.enderpocket.client.EnderPocketClient;
 import dev.astro.enderpocket.client.EnderPocketGuiLayout;
+import dev.astro.enderpocket.client.EnderPanelPainter;
 import dev.astro.enderpocket.client.EnderTabButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -17,14 +17,10 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,11 +29,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InventoryScreen.class)
 public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<InventoryMenu> {
-	@Unique
-	private static final Identifier ENDERPOCKET_GENERIC_54 = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
-	@Unique
-	private static final Component ENDERPOCKET_PANEL_TITLE = Component.translatable("container.enderchest");
-
 	@Unique
 	private EnderTabButton enderpocket$button;
 
@@ -114,7 +105,7 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Inject(method = "init", at = @At("TAIL"))
 	private void enderpocket$init(CallbackInfo ci) {
-		if (EnderPanelClient.available(this.minecraft.player)) {
+		if (EnderPanelClient.unlocked(this.minecraft.player)) {
 			this.enderpocket$button = this.addRenderableWidget(new EnderTabButton(0, 0, () -> {
 				EnderPanelClient.toggle();
 				this.enderpocket$onPanelToggled();
@@ -155,6 +146,10 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		// Re-scan placement each frame: all mods' widgets exist by now (init
 		// hook ordering is undefined), and it adapts to recipe-book toggles.
 		this.enderpocket$positionButton();
+		EnderPanelClient.enforceRules(this.minecraft.player);
+		if (this.enderpocket$button != null) {
+			this.enderpocket$button.active = EnderPanelClient.usable(this.minecraft.player);
+		}
 		EnderPanelClient.updateAnim(this.width, this.height, this.leftPos, this.topPos,
 				((AbstractRecipeBookScreenAccessor) this).enderpocket$recipeBook().isVisible(), this.enderpocket$effectsCount());
 		EnderPanelClient.pushScreen(graphics.pose());
@@ -168,42 +163,12 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 			EnderPanelClient.pushPanelAbs(graphics.pose(), this.leftPos, this.topPos);
 			int px = this.leftPos + EnderPocketLayout.PANEL_REL_X;
 			int py = this.topPos + EnderPocketLayout.PANEL_REL_Y;
-			if (EnderPocketGuiLayout.hasPanelTextureOverride()) {
-				// A resource pack supplied a dedicated 176x78 panel window.
-				graphics.blit(RenderPipelines.GUI_TEXTURED, EnderPocketGuiLayout.panelTexture(),
-						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H,
-						EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H);
-			} else {
-				// Assembled from the pack's own chest texture so it auto-themes:
-				// title bar + 3 slot rows, then the bottom border strip.
-				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
-						px, py, 0.0F, 0.0F, EnderPocketLayout.PANEL_W, 71, 256, 256);
-				graphics.blit(RenderPipelines.GUI_TEXTURED, ENDERPOCKET_GENERIC_54,
-						px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
-			}
-			graphics.text(this.font, ENDERPOCKET_PANEL_TITLE, px + 8, py + 6, -12566464, false);
-			int enderpocket$filled = 0;
-			for (Slot slot : this.getMenu().slots) {
-				if (slot instanceof EnderSlot && !slot.getItem().isEmpty()) {
-					enderpocket$filled++;
-				}
-			}
-			Component enderpocket$count = Component.translatable("enderpocket.slots", enderpocket$filled,
-					EnderPocketLayout.ENDER_COLS * EnderPocketLayout.ENDER_ROWS);
-			int enderpocket$countWidth = this.font.width(enderpocket$count);
-			graphics.text(this.font, enderpocket$count, px + EnderPocketLayout.PANEL_W - 8 - enderpocket$countWidth, py + 6, -12566464, false);
+			EnderPanelPainter.drawWindow(graphics, this.font, px, py, this.getMenu(),
+					EnderPanelClient.localX(EnderPanelClient.rawMouseX, this.leftPos),
+					EnderPanelClient.localY(EnderPanelClient.rawMouseY, this.topPos),
+					EnderPanelClient.slotsInteractive(), EnderPanelClient.rawMouseX, EnderPanelClient.rawMouseY);
 			if (!EnderPanelClient.slotsInteractive()) {
-				for (Slot slot : this.getMenu().slots) {
-					if (slot instanceof EnderSlot) {
-						ItemStack stack = slot.getItem();
-						if (!stack.isEmpty()) {
-							int ix = this.leftPos + slot.x;
-							int iy = this.topPos + slot.y;
-							graphics.item(stack, ix, iy);
-							graphics.itemDecorations(this.font, stack, ix, iy);
-						}
-					}
-				}
+				EnderPanelPainter.drawItems(graphics, this.font, this.leftPos, this.topPos, this.getMenu());
 			}
 			EnderPanelClient.popPanelAbs(graphics.pose());
 			EnderPanelClient.popInventoryClip(graphics);
@@ -257,6 +222,10 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (EnderPanelClient.slotsInteractive()
+				&& EnderPanelPainter.click(EnderPanelClient.localX(event.x(), this.leftPos), EnderPanelClient.localY(event.y(), this.topPos))) {
+			return true;
+		}
 		return super.mouseClicked(EnderPanelClient.remap(event), doubleClick);
 	}
 
@@ -298,13 +267,13 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		if (EnderPocketClient.peekKey != null && !EnderPocketClient.peekKey.isUnbound()
 				&& EnderPocketClient.peekKey.matches(event)
 				&& !EnderPanelClient.isOpen()
-				&& EnderPanelClient.available(this.minecraft.player)) {
+				&& EnderPanelClient.usable(this.minecraft.player)) {
 			EnderPanelClient.setPeeking(true);
 			return true;
 		}
 		if (EnderPocketClient.toggleKey != null && !EnderPocketClient.toggleKey.isUnbound()
 				&& EnderPocketClient.toggleKey.matches(event)
-				&& EnderPanelClient.available(this.minecraft.player)) {
+				&& EnderPanelClient.usable(this.minecraft.player)) {
 			EnderPanelClient.toggle();
 			this.enderpocket$onPanelToggled();
 			return true;
