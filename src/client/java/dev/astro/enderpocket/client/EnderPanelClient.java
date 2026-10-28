@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import org.joml.Matrix3x2fStack;
@@ -378,7 +378,7 @@ public final class EnderPanelClient {
 	 * tucked panel). Enable while ONLY the screen transform is on the pose — the
 	 * scissor rectangle is captured through it into screen space.
 	 */
-	public static void pushInventoryClip(GuiGraphicsExtractor graphics, int leftPos, int topPos) {
+	public static void pushInventoryClip(GuiGraphics graphics, int leftPos, int topPos) {
 		int x0 = leftPos + EnderPocketLayout.INV_W;
 		int y0 = topPos + EnderPocketLayout.PANEL_REL_Y - 4;
 		int x1 = leftPos + EnderPocketLayout.PANEL_REL_X + EnderPocketLayout.PANEL_W + 40;
@@ -386,7 +386,7 @@ public final class EnderPanelClient {
 		graphics.enableScissor(x0, y0, x1, y1);
 	}
 
-	public static void popInventoryClip(GuiGraphicsExtractor graphics) {
+	public static void popInventoryClip(GuiGraphics graphics) {
 		graphics.disableScissor();
 	}
 

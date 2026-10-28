@@ -10,7 +10,7 @@ import dev.astro.enderpocket.client.EnderPocketClient;
 import dev.astro.enderpocket.client.EnderPocketGuiLayout;
 import dev.astro.enderpocket.client.EnderPanelPainter;
 import dev.astro.enderpocket.client.EnderTabButton;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -138,11 +138,10 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	// drawing of BOTH passes but must NOT scale the full-screen dim — so the
 	// background push happens right after the super call that draws the dim.
 
-	@Inject(method = "extractBackground",
-			at = @At(value = "INVOKE",
-					target = "Lnet/minecraft/client/gui/screens/inventory/AbstractRecipeBookScreen;extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
-					shift = At.Shift.AFTER))
-	private void enderpocket$afterDim(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
+	// 1.21.x: the dim is drawn by AbstractContainerScreen.renderBackground right
+	// before it calls renderBg, so renderBg's HEAD is "after the dim".
+	@Inject(method = "renderBg", at = @At("HEAD"))
+	private void enderpocket$afterDim(GuiGraphics graphics, float a, int mouseX, int mouseY, CallbackInfo ci) {
 		// Re-scan placement each frame: all mods' widgets exist by now (init
 		// hook ordering is undefined), and it adapts to recipe-book toggles.
 		this.enderpocket$positionButton();
@@ -175,17 +174,17 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		}
 	}
 
-	@Inject(method = "extractBackground", at = @At("TAIL"))
-	private void enderpocket$panelBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
+	@Inject(method = "renderBg", at = @At("TAIL"))
+	private void enderpocket$panelBackground(GuiGraphics graphics, float a, int mouseX, int mouseY, CallbackInfo ci) {
 		EnderPanelClient.popScreen(graphics.pose());
 	}
 
 	// The player model is a real 3D render that ignores the 2D pose transform —
 	// map its box and size manually, and feed it the real cursor position.
-	@WrapOperation(method = "extractBackground",
+	@WrapOperation(method = "renderBg",
 			at = @At(value = "INVOKE",
-					target = "Lnet/minecraft/client/gui/screens/inventory/InventoryScreen;extractEntityInInventoryFollowsMouse(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIIIFFFLnet/minecraft/world/entity/LivingEntity;)V"))
-	private void enderpocket$scaleEntity(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1, int size,
+					target = "Lnet/minecraft/client/gui/screens/inventory/InventoryScreen;renderEntityInInventoryFollowsMouse(Lnet/minecraft/client/gui/GuiGraphics;IIIIIFFFLnet/minecraft/world/entity/LivingEntity;)V"))
+	private void enderpocket$scaleEntity(GuiGraphics graphics, int x0, int y0, int x1, int y1, int size,
 			float offsetY, float mouseX, float mouseY, LivingEntity entity, Operation<Void> original) {
 		if (EnderPanelClient.screenTransformActive()) {
 			original.call(graphics,
@@ -198,8 +197,8 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 		}
 	}
 
-	@WrapMethod(method = "extractRenderState")
-	private void enderpocket$wrapExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, Operation<Void> original) {
+	@WrapMethod(method = "render")
+	private void enderpocket$wrapExtract(GuiGraphics graphics, int mouseX, int mouseY, float a, Operation<Void> original) {
 		EnderPanelClient.rawMouseX = mouseX;
 		EnderPanelClient.rawMouseY = mouseY;
 		EnderPanelClient.pushScreen(graphics.pose());
@@ -212,10 +211,10 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 	}
 
 	@Override
-	protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+	protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
 		// The deferred tooltip renders outside our pose transforms, so anchor it
 		// at the untransformed cursor position.
-		super.extractTooltip(graphics, EnderPanelClient.rawMouseX, EnderPanelClient.rawMouseY);
+		super.renderTooltip(graphics, EnderPanelClient.rawMouseX, EnderPanelClient.rawMouseY);
 	}
 
 	// ------------------------------------------------------------- input

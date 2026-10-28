@@ -20,7 +20,7 @@ public abstract class EffectsInInventoryMixin {
 	@Shadow
 	private AbstractContainerScreen<?> screen;
 
-	@ModifyExpressionValue(method = "extractEffects",
+	@ModifyExpressionValue(method = "renderEffects",
 			at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;topPos:I"))
 	private int enderpocket$startBelowButton(int topPos) {
 		if (this.screen instanceof InventoryScreen && EnderPanelClient.unlocked(Minecraft.getInstance().player)) {

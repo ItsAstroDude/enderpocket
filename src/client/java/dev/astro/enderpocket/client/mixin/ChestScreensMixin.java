@@ -1,7 +1,7 @@
 package dev.astro.enderpocket.client.mixin;
 
 import dev.astro.enderpocket.client.ChestPanelClient;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
@@ -21,11 +21,9 @@ public abstract class ChestScreensMixin {
 	@Unique
 	private boolean enderpocket$pushed;
 
-	@Inject(method = "extractBackground",
-			at = @At(value = "INVOKE",
-					target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
-					shift = At.Shift.AFTER))
-	private void enderpocket$afterDim(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
+	// 1.21.x: renderBg runs right after the dim (AbstractContainerScreen.renderBackground).
+	@Inject(method = "renderBg", at = @At("HEAD"))
+	private void enderpocket$afterDim(GuiGraphics graphics, float a, int mouseX, int mouseY, CallbackInfo ci) {
 		int dx = ChestPanelClient.beforeBackground((AbstractContainerScreen<?>) (Object) this, graphics, mouseX, mouseY);
 		if (dx != 0) {
 			graphics.pose().pushMatrix();
@@ -34,8 +32,8 @@ public abstract class ChestScreensMixin {
 		}
 	}
 
-	@Inject(method = "extractBackground", at = @At("TAIL"))
-	private void enderpocket$popShift(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
+	@Inject(method = "renderBg", at = @At("TAIL"))
+	private void enderpocket$popShift(GuiGraphics graphics, float a, int mouseX, int mouseY, CallbackInfo ci) {
 		if (this.enderpocket$pushed) {
 			this.enderpocket$pushed = false;
 			graphics.pose().popMatrix();

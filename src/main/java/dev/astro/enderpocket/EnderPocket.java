@@ -20,9 +20,9 @@ public class EnderPocket implements ModInitializer {
 	public void onInitialize() {
 		EnderPocketConfig.load();
 		EnderPocketAttachments.init();
-		PayloadTypeRegistry.serverboundPlay().register(PanelOpenPayload.TYPE, PanelOpenPayload.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(PanelActionPayload.TYPE, PanelActionPayload.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(RulesPayload.TYPE, RulesPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(PanelOpenPayload.TYPE, PanelOpenPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(PanelActionPayload.TYPE, PanelActionPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(RulesPayload.TYPE, RulesPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(PanelOpenPayload.TYPE, (payload, context) -> {
 			var player = context.player();

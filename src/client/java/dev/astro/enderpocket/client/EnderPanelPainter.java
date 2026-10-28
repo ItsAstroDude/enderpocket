@@ -7,7 +7,7 @@ import dev.astro.enderpocket.PanelActionPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -46,7 +46,7 @@ public final class EnderPanelPainter {
 	 * current pose. {@code localX/localY} is the mouse in panel-local coords
 	 * (for button hover); {@code interactive} false draws the buttons idle.
 	 */
-	public static void drawWindow(GuiGraphicsExtractor graphics, Font font, int px, int py, AbstractContainerMenu menu,
+	public static void drawWindow(GuiGraphics graphics, Font font, int px, int py, AbstractContainerMenu menu,
 			double localX, double localY, boolean interactive, int rawMouseX, int rawMouseY) {
 		if (EnderPocketGuiLayout.hasPanelTextureOverride()) {
 			// A resource pack supplied a dedicated 176x78 panel window.
@@ -61,7 +61,7 @@ public final class EnderPanelPainter {
 			graphics.blit(RenderPipelines.GUI_TEXTURED, GENERIC_54,
 					px, py + 71, 0.0F, 215.0F, EnderPocketLayout.PANEL_W, EnderPocketLayout.PANEL_H - 71, 256, 256);
 		}
-		graphics.text(font, TITLE, px + 8, py + 6, TEXT_COLOR, false);
+		graphics.drawString(font, TITLE, px + 8, py + 6, TEXT_COLOR, false);
 
 		int filled = 0;
 		int start = EnderPocketMenus.enderStart(menu);
@@ -73,7 +73,7 @@ public final class EnderPanelPainter {
 			}
 		}
 		Component count = Component.translatable("enderpocket.slots", filled, EnderPocketLayout.ENDER_COUNT);
-		graphics.text(font, count, px + SORT_X - 3 - font.width(count), py + 6, TEXT_COLOR, false);
+		graphics.drawString(font, count, px + SORT_X - 3 - font.width(count), py + 6, TEXT_COLOR, false);
 
 		int hovered = interactive ? buttonAt(localX, localY) : -1;
 		drawButton(graphics, px + SORT_X, py + BUTTON_Y, SORT_ICON, hovered == PanelActionPayload.SORT);
@@ -86,13 +86,13 @@ public final class EnderPanelPainter {
 		}
 	}
 
-	private static void drawButton(GuiGraphicsExtractor graphics, int x, int y, Identifier icon, boolean hovered) {
+	private static void drawButton(GuiGraphics graphics, int x, int y, Identifier icon, boolean hovered) {
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, hovered ? BUTTON_HIGHLIGHTED : BUTTON, x, y, BUTTON_SIZE, BUTTON_SIZE);
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, icon, x + 2, y + 2, 7, 7);
 	}
 
 	/** Items drawn statically (no hover/interaction) while the panel slides. */
-	public static void drawItems(GuiGraphicsExtractor graphics, Font font, int leftPos, int topPos, AbstractContainerMenu menu) {
+	public static void drawItems(GuiGraphics graphics, Font font, int leftPos, int topPos, AbstractContainerMenu menu) {
 		int start = EnderPocketMenus.enderStart(menu);
 		if (start < 0) {
 			return;
@@ -101,8 +101,8 @@ public final class EnderPanelPainter {
 			Slot slot = menu.slots.get(i);
 			ItemStack stack = slot.getItem();
 			if (!stack.isEmpty()) {
-				graphics.item(stack, leftPos + slot.x, topPos + slot.y);
-				graphics.itemDecorations(font, stack, leftPos + slot.x, topPos + slot.y);
+				graphics.renderItem(stack, leftPos + slot.x, topPos + slot.y);
+				graphics.renderItemDecorations(font, stack, leftPos + slot.x, topPos + slot.y);
 			}
 		}
 	}

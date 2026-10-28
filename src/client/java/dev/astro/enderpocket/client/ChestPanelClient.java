@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
@@ -68,7 +68,7 @@ public final class ChestPanelClient {
 			EnderPanelClient.enforceRules(client.player);
 			EnderTabButton chestButton = new EnderTabButton(0, 0, EnderPanelClient::toggle);
 			button = chestButton;
-			Screens.getWidgets(screen).add(chestButton);
+			Screens.getButtons(screen).add(chestButton);
 			// (Re)init: jump straight to the settled layout.
 			shift = targetShift(containerScreen);
 			lastMs = -1L;
@@ -144,7 +144,7 @@ public final class ChestPanelClient {
 	}
 
 	private static boolean spotFree(AbstractContainerScreen<?> screen, EnderTabButton self, int x, int y, int w, int h) {
-		for (AbstractWidget widget : Screens.getWidgets(screen)) {
+		for (AbstractWidget widget : Screens.getButtons(screen)) {
 			if (widget != self && widget.visible
 					&& x < widget.getX() + widget.getWidth() && x + w > widget.getX()
 					&& y < widget.getY() + widget.getHeight() && y + h > widget.getY()) {
@@ -159,7 +159,7 @@ public final class ChestPanelClient {
 	 * the button and draw the panel. Returns how far the vanilla window art must
 	 * be shifted (vanilla draws it at the centred position, ignoring leftPos).
 	 */
-	public static int beforeBackground(AbstractContainerScreen<?> screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+	public static int beforeBackground(AbstractContainerScreen<?> screen, GuiGraphics graphics, int mouseX, int mouseY) {
 		EnderTabButton chestButton = button;
 		if (chestButton == null) {
 			return 0;

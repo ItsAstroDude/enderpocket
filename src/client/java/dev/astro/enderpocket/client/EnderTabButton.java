@@ -1,6 +1,6 @@
 package dev.astro.enderpocket.client;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.InputWithModifiers;
@@ -39,18 +39,18 @@ public class EnderTabButton extends AbstractButton {
 	}
 
 	@Override
-	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-		this.extractDefaultSprite(graphics);
+	protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float a) {
+		this.renderDefaultSprite(graphics);
 		int size = Math.min(this.getWidth(), this.getHeight());
 		if (size >= 18) {
-			graphics.item(ICON,
+			graphics.renderItem(ICON,
 					this.getX() + (this.getWidth() - 16) / 2, this.getY() + (this.getHeight() - 16) / 2);
 		} else {
 			float scale = (size - 2) / 16.0f;
 			graphics.pose().pushMatrix();
 			graphics.pose().translate(this.getX() + (this.getWidth() - 16 * scale) / 2.0f, this.getY() + (this.getHeight() - 16 * scale) / 2.0f);
 			graphics.pose().scale(scale, scale);
-			graphics.item(ICON, 0, 0);
+			graphics.renderItem(ICON, 0, 0);
 			graphics.pose().popMatrix();
 		}
 		if (this.isHovered()) {

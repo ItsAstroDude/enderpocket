@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.astro.enderpocket.EnderSlot;
 import dev.astro.enderpocket.client.ChestPanelClient;
 import dev.astro.enderpocket.client.EnderPanelClient;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.inventory.Slot;
@@ -36,8 +36,8 @@ public abstract class AbstractContainerScreenMixin {
 		return (Object) this instanceof InventoryScreen && slot instanceof EnderSlot && EnderPanelClient.panelTransformActive();
 	}
 
-	@WrapMethod(method = "extractSlot")
-	private void enderpocket$scaleSlotRender(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, Operation<Void> original) {
+	@WrapMethod(method = "renderSlot")
+	private void enderpocket$scaleSlotRender(GuiGraphics graphics, Slot slot, int mouseX, int mouseY, Operation<Void> original) {
 		if ((Object) this instanceof InventoryScreen && slot instanceof EnderSlot) {
 			// Slot contents stay hidden until the panel has slid out; they'd
 			// otherwise float over the inventory during the animation.
@@ -52,8 +52,8 @@ public abstract class AbstractContainerScreenMixin {
 		}
 	}
 
-	@WrapMethod(method = "extractSlotHighlightBack")
-	private void enderpocket$scaleHighlightBack(GuiGraphicsExtractor graphics, Operation<Void> original) {
+	@WrapMethod(method = "renderSlotHighlightBack")
+	private void enderpocket$scaleHighlightBack(GuiGraphics graphics, Operation<Void> original) {
 		if (this.hoveredSlot != null && this.enderpocket$panelSlot(this.hoveredSlot)) {
 			EnderPanelClient.pushPanelRel(graphics.pose());
 			original.call(graphics);
@@ -63,8 +63,8 @@ public abstract class AbstractContainerScreenMixin {
 		}
 	}
 
-	@WrapMethod(method = "extractSlotHighlightFront")
-	private void enderpocket$scaleHighlightFront(GuiGraphicsExtractor graphics, Operation<Void> original) {
+	@WrapMethod(method = "renderSlotHighlightFront")
+	private void enderpocket$scaleHighlightFront(GuiGraphics graphics, Operation<Void> original) {
 		if (this.hoveredSlot != null && this.enderpocket$panelSlot(this.hoveredSlot)) {
 			EnderPanelClient.pushPanelRel(graphics.pose());
 			original.call(graphics);
