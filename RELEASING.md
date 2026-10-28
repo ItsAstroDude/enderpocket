@@ -49,7 +49,7 @@ modrinth.com → your project → **Versions → Create version**:
 - **Version number**: must match the jar (e.g. `0.2.2`)
 - **Type**: Release
 - **File**: the jar from `build\libs`
-- **Game version** 26.3, **loader** Fabric, dependency **Fabric API** (required)
+- **Game version** 26.1, 26.1.1, 26.1.2, **loader** Fabric, dependency **Fabric API** (required)
 - **Changelog**: markdown; a short `## Fixed` / `## Added` / `## Changed` list is plenty
 
 ## Gotchas

@@ -3,7 +3,7 @@
 Open your **real ender chest** straight from the inventory screen. No chest nearby, no commands,
 no new items — just a button. (Internally codenamed *EnderPocket*.)
 
-![Fabric](https://img.shields.io/badge/loader-Fabric-blue) ![Minecraft 26.2](https://img.shields.io/badge/minecraft-26.3-green)
+![Fabric](https://img.shields.io/badge/loader-Fabric-blue) ![Minecraft 26.2](https://img.shields.io/badge/minecraft-26.1.x-green)
 
 ## What it does
 
@@ -67,7 +67,7 @@ effect list gets pushed down when the button uses the corner spot.
 
 ## Requirements
 
-- Minecraft **26.3**
+- Minecraft **26.1 – 26.1.2**
 - Fabric Loader **0.19.3+**
 - Fabric API
 

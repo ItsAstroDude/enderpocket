@@ -66,14 +66,14 @@ public class EnderPocketClient implements ClientModInitializer {
 		// with the panel already out.
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (toggleKey.consumeClick()) {
-				if (client.gui.screen() == null && client.player != null && EnderPanelClient.usable(client.player)) {
+				if (client.screen == null && client.player != null && EnderPanelClient.usable(client.player)) {
 					if (EnderPocketConfig.get().autoCloseRecipeBook && !EnderPanelClient.isBookRespected()) {
 						// Pre-close the recipe book in its persisted settings so the
 						// screen inits cleanly with the book shut.
 						client.player.getRecipeBook().setOpen(RecipeBookType.CRAFTING, false);
 					}
 					EnderPanelClient.setOpen(true);
-					client.gui.setScreen(new InventoryScreen(client.player));
+					client.setScreen(new InventoryScreen(client.player));
 				}
 			}
 		});
